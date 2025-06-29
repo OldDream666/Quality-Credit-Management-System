@@ -8,16 +8,39 @@
     "start": "next start"
   },
   "dependencies": {
-    "next": "15.3.4"
+    "@heroicons/react": "^2.2.0",
+    "@tiptap/extension-color": "^2.23.0",
+    "@tiptap/extension-link": "^2.23.0",
+    "@tiptap/extension-text-align": "^2.23.0",
+    "@tiptap/extension-text-style": "^2.23.0",
+    "@tiptap/extension-underline": "^2.23.0",
+    "@tiptap/pm": "^2.23.0",
+    "@tiptap/react": "^2.23.0",
+    "@tiptap/starter-kit": "^2.23.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@upstash/redis": "^1.35.0",
+    "bcryptjs": "^3.0.2",
+    "clsx": "^2.1.1",
+    "exceljs": "^4.4.0",
+    "jsonwebtoken": "^9.0.2",
+    "next": "15.3.4",
+    "pg": "^8.16.2",
+    "react-hot-toast": "^2.5.2",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20",
+    "@types/pg": "^8.15.4",
     "@types/react": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "@types/tinymce": "^4.6.9",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "@eslint/eslintrc": "^3"
+    "postcss": "^8.5.6",
+    "typescript": "^5"
   }
 }
