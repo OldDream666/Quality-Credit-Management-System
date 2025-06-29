@@ -1,2 +1,0 @@
--- 为用户表添加审批权限字段
-ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve BOOLEAN NOT NULL DEFAULT FALSE;
