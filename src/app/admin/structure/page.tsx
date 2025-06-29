@@ -4,6 +4,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { toast, Toaster } from 'react-hot-toast';
 
 export default function StructurePage() {
   const router = useRouter();
@@ -92,16 +93,28 @@ export default function StructurePage() {
 
   // 年级操作
   async function addGrade() {
-    if (!newGrade.trim()) return;
-    await fetch("/api/structure/grades", { method: "POST", body: JSON.stringify({ name: newGrade }), headers: { "Content-Type": "application/json" } });
-    setNewGrade("");
-    fetchGrades();
+    if (!newGrade.trim()) return toast.error('请输入年级名称');
+    const res = await fetch("/api/structure/grades", { method: "POST", body: JSON.stringify({ name: newGrade }), headers: { "Content-Type": "application/json" } });
+    if (res.ok) {
+      toast.success('添加年级成功');
+      setNewGrade("");
+      fetchGrades();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || '添加年级失败');
+    }
   }
   async function deleteGrade(id: number) {
     if (!window.confirm("确定要删除该年级？删除后该年级下所有用户的年级字段将被清空。")) return;
-    await fetch("/api/structure/grades", { method: "DELETE", body: JSON.stringify({ id }), headers: { "Content-Type": "application/json" } });
-    fetchGrades();
-    fetchClasses();
+    const res = await fetch("/api/structure/grades", { method: "DELETE", body: JSON.stringify({ id }), headers: { "Content-Type": "application/json" } });
+    if (res.ok) {
+      toast.success('删除年级成功');
+      fetchGrades();
+      fetchClasses();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || '删除年级失败');
+    }
   }
   function startEditGrade(g: any) {
     setEditingGradeId(g.id);
@@ -112,25 +125,43 @@ export default function StructurePage() {
     setEditingGradeName("");
   }
   async function saveEditGrade() {
-    if (!editingGradeName.trim() || editingGradeId == null) return;
-    await fetch("/api/structure/grades", { method: "PUT", body: JSON.stringify({ id: editingGradeId, name: editingGradeName }), headers: { "Content-Type": "application/json" } });
-    setEditingGradeId(null);
-    setEditingGradeName("");
-    fetchGrades();
+    if (!editingGradeName.trim() || editingGradeId == null) return toast.error('请输入年级名称');
+    const res = await fetch("/api/structure/grades", { method: "PUT", body: JSON.stringify({ id: editingGradeId, name: editingGradeName }), headers: { "Content-Type": "application/json" } });
+    if (res.ok) {
+      toast.success('修改年级成功');
+      setEditingGradeId(null);
+      setEditingGradeName("");
+      fetchGrades();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || '修改年级失败');
+    }
   }
 
   // 专业操作
   async function addMajor() {
-    if (!newMajor.trim()) return;
-    await fetch("/api/structure/majors", { method: "POST", body: JSON.stringify({ name: newMajor }), headers: { "Content-Type": "application/json" } });
-    setNewMajor("");
-    fetchMajors();
+    if (!newMajor.trim()) return toast.error('请输入专业名称');
+    const res = await fetch("/api/structure/majors", { method: "POST", body: JSON.stringify({ name: newMajor }), headers: { "Content-Type": "application/json" } });
+    if (res.ok) {
+      toast.success('添加专业成功');
+      setNewMajor("");
+      fetchMajors();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || '添加专业失败');
+    }
   }
   async function deleteMajor(id: number) {
     if (!window.confirm("确定要删除该专业？删除后该专业下所有用户的专业字段将被清空。")) return;
-    await fetch("/api/structure/majors", { method: "DELETE", body: JSON.stringify({ id }), headers: { "Content-Type": "application/json" } });
-    fetchMajors();
-    fetchClasses();
+    const res = await fetch("/api/structure/majors", { method: "DELETE", body: JSON.stringify({ id }), headers: { "Content-Type": "application/json" } });
+    if (res.ok) {
+      toast.success('删除专业成功');
+      fetchMajors();
+      fetchClasses();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || '删除专业失败');
+    }
   }
   function startEditMajor(m:any){ setEditingMajorId(m.id); setEditingMajorName(m.name); }
   function cancelEditMajor(){ setEditingMajorId(null); setEditingMajorName(""); }
@@ -138,15 +169,27 @@ export default function StructurePage() {
 
   // 班级操作
   async function addClass() {
-    if (!newClass.name.trim() || !newClass.grade_id || !newClass.major_id) return;
-    await fetch("/api/structure/classes", { method: "POST", body: JSON.stringify(newClass), headers: { "Content-Type": "application/json" } });
-    setNewClass({ name: "", grade_id: "", major_id: "" });
-    fetchClasses();
+    if (!newClass.name.trim() || !newClass.grade_id || !newClass.major_id) return toast.error('请填写完整班级信息');
+    const res = await fetch("/api/structure/classes", { method: "POST", body: JSON.stringify(newClass), headers: { "Content-Type": "application/json" } });
+    if (res.ok) {
+      toast.success('添加班级成功');
+      setNewClass({ name: "", grade_id: "", major_id: "" });
+      fetchClasses();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || '添加班级失败');
+    }
   }
   async function deleteClass(id: number) {
     if (!window.confirm("确定要删除该班级？删除后该班级下所有用户的班级字段将被清空。")) return;
-    await fetch("/api/structure/classes", { method: "DELETE", body: JSON.stringify({ id }), headers: { "Content-Type": "application/json" } });
-    fetchClasses();
+    const res = await fetch("/api/structure/classes", { method: "DELETE", body: JSON.stringify({ id }), headers: { "Content-Type": "application/json" } });
+    if (res.ok) {
+      toast.success('删除班级成功');
+      fetchClasses();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || '删除班级失败');
+    }
   }
   function startEditClass(cls:any){ setEditingClassId(cls.id); setEditingClass({name:cls.name,grade_id:String(cls.grade_id),major_id:String(cls.major_id)}); }
   function cancelEditClass(){ setEditingClassId(null); setEditingClass({name:"",grade_id:"",major_id:""}); }
@@ -206,17 +249,23 @@ export default function StructurePage() {
 
   function handleImportFile(e:any){ setImportFile(e.target.files[0]||null); }
   async function handleImportSubmit(){
-    if(!importFile){alert('请先选择文件');return;}
+    if(!importFile){toast.error('请先选择文件');return;}
     setImporting(true); setImportResult(null);
     const formData = new FormData(); formData.append('file', importFile);
     const res = await fetch('/api/structure/import', { method: 'POST', body: formData });
     const data = await res.json();
     setImporting(false); setImportResult(data.results||[{success:false,message:data.error||'导入失败'}]);
-    if(res.ok){ fetchGrades(); fetchMajors(); fetchClasses(); }
+    if(res.ok){
+      toast.success('导入完成');
+      fetchGrades(); fetchMajors(); fetchClasses();
+    } else {
+      toast.error(data.error || '导入失败');
+    }
   }
 
   return (
     <div className="min-h-screen flex justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-0 py-8">
+      <Toaster position="top-center" />
       <div className="w-[80vw] max-w-[1500px] bg-white rounded-xl shadow-lg p-8 flex gap-12 relative overflow-x-auto">
         {/* 返回按钮 */}
         <div className="absolute left-6 top-6 z-10">

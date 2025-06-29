@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { validateUserForm, getPasswordStrength } from "@/lib/validation";
+import { toast } from 'react-hot-toast';
 
 function InputField({ label, value, onChange, required, error, type = "text", placeholder, onBlur, disabled, autoFocus, tip }: any) {
   return (
@@ -68,7 +69,6 @@ export default function AddUserForm({ token, onSuccess }: { token: string, onSuc
     className: ""
   });
   const [errors, setErrors] = useState<any>({});
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<any>(null);
 
@@ -79,7 +79,12 @@ export default function AddUserForm({ token, onSuccess }: { token: string, onSuc
 
   // 获取年级列表
   useEffect(() => {
-    fetch("/api/structure/grades").then(res => res.json()).then(data => setGrades(data.grades || []));
+    fetch("/api/structure/grades")
+      .then(res => res.json())
+      .then(data => {
+        const sorted = (data.grades || []).slice().sort((a: any, b: any) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+        setGrades(sorted);
+      });
   }, []);
 
   // 根据年级获取专业列表
@@ -87,13 +92,16 @@ export default function AddUserForm({ token, onSuccess }: { token: string, onSuc
     const url = form.grade 
       ? `/api/structure/majors?grade_id=${form.grade}`
       : '/api/structure/majors';
-    fetch(url).then(res => res.json()).then(data => {
-      setMajors(data.majors || []);
-      // 如果当前选择的专业不在新的专业列表中，清空专业选择
-      if (form.major && !data.majors?.some((m: any) => m.id === form.major)) {
-        setForm(f => ({ ...f, major: '', className: '' }));
-      }
-    });
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const sorted = (data.majors || []).slice().sort((a: any, b: any) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+        setMajors(sorted);
+        // 如果当前选择的专业不在新的专业列表中，清空专业选择
+        if (form.major && !data.majors?.some((m: any) => m.id === form.major)) {
+          setForm(f => ({ ...f, major: '', className: '' }));
+        }
+      });
   }, [form.grade]);
 
   // 联动获取班级
@@ -101,7 +109,10 @@ export default function AddUserForm({ token, onSuccess }: { token: string, onSuc
     if (form.grade && form.major) {
       fetch(`/api/structure/classes?grade_id=${form.grade}&major_id=${form.major}`)
         .then(res => res.json())
-        .then(data => setClasses(data.classes || []));
+        .then(data => {
+          const sorted = (data.classes || []).slice().sort((a: any, b: any) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+          setClasses(sorted);
+        });
     } else {
       setClasses([]);
     }
@@ -120,7 +131,6 @@ export default function AddUserForm({ token, onSuccess }: { token: string, onSuc
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrors({});
-    setSuccess("");
     setLoading(true);
     // 校验
     const validation = validateUserForm(form);
@@ -151,15 +161,13 @@ export default function AddUserForm({ token, onSuccess }: { token: string, onSuc
       })
     });
     const data = await res.json();
-    
     setLoading(false);
     if (res.ok) {
-      setSuccess("添加成功");
+      toast.success("添加成功");
       setForm({ role: "student", username: "", password: "", name: "", studentId: "", grade: "", major: "", className: "" });
       onSuccess();
-      timerRef.current = setTimeout(() => setSuccess(""), 2000);
     } else {
-      setErrors({ global: data.error || "添加失败" });
+      toast.error(data.error || "添加失败");
     }
   }
 
@@ -260,8 +268,6 @@ export default function AddUserForm({ token, onSuccess }: { token: string, onSuc
       </div>
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition w-full sm:w-auto disabled:opacity-60" type="submit" disabled={loading}>{loading ? "添加中..." : "添加"}</button>
-        {errors.global && <div className="text-red-600 mb-2 w-full sm:w-auto">{errors.global}</div>}
-        {success && <div className="text-green-600 mb-2 w-full sm:w-auto">{success}</div>}
       </div>
     </form>
   );
