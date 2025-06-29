@@ -1,5 +1,5 @@
 # <div align=center>学生素质学分管理系统</div>
-<div align=center><img src="https://github.com/OldDream666/Quality-Credit-Management-System/images/user_dashboard.png"></div>
+<div align=center><img src="https://github.com/OldDream666/Quality-Credit-Management-System/blob/main/images/user_dashboard.png?raw=true"></div>
 一个基于 Next.js + TypeScript + PostgreSQL 的现代化学生素质学分管理系统，支持学分申请、审批、用户管理等功能。
 
 ## ✨ 功能特性
