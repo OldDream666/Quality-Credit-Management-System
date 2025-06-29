@@ -38,7 +38,7 @@
 
 1. **克隆项目**
 ```bash
-git clone <repository-url>
+git clone https://github.com/OldDream666/Quality-Credit-Management-System.git
 cd student
 ```
 
@@ -237,6 +237,7 @@ CREATE TABLE classes (
     UNIQUE (grade_id),
     UNIQUE (major_id)
 );
+```
 
 ### 索引优化
 
