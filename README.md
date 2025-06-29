@@ -54,19 +54,14 @@ cp env.example .env.local
 编辑 `.env.local` 文件，配置数据库连接等信息。
 
 4. **数据库设置**
+
+**使用导出的数据库结构**
 ```bash
 # 创建数据库
 createdb student_credits
 
-# 运行迁移文件（按顺序执行）
-psql -d student_credits -f migrations/20250625_add_student_fields.sql
-psql -d student_credits -f migrations/20250625_add_credits_proofs.sql
-psql -d student_credits -f migrations/20250625_add_proof_file.sql
-psql -d student_credits -f migrations/20250625_add_reject_reason.sql
-psql -d student_credits -f migrations/20250625_add_can_approve.sql
-psql -d student_credits -f migrations/20250626_add_class_fields.sql
-psql -d student_credits -f migrations/20250626_update_roles_and_approval.sql
-psql -d student_credits -f migrations/20250627_optimize_database.sql
+# 导入完整的数据库结构
+psql -d student_credits -f database_schema_export_2025-06-29T08-57-35.sql
 ```
 
 5. **启动开发服务器**
@@ -133,34 +128,148 @@ student/
 
 ### 数据库表结构
 
-#### users表
-- `id`: 主键
-- `username`: 用户名（唯一）
-- `password`: 加密密码
-- `name`: 真实姓名
-- `student_id`: 学号（唯一）
-- `role`: 角色
-- `grade`: 年级
-- `major`: 专业
-- `class`: 班级
-- `created_at`: 创建时间
 
-#### credits表
-- `id`: 主键
-- `user_id`: 用户ID（外键）
-- `type`: 申请类型
-- `score`: 分数
-- `status`: 状态
-- `reject_reason`: 驳回原因
-- `created_at`: 创建时间
+#### 1. 用户管理相关表
 
-#### credits_proofs表
-- `id`: 主键
-- `credit_id`: 学分申请ID（外键）
-- `file`: 文件二进制数据
-- `filename`: 文件名
-- `mimetype`: 文件类型
-- `created_at`: 创建时间
+**`users` - 用户表**
+```sql
+CREATE TABLE users (
+    id integer(32) DEFAULT nextval('users_id_seq'::regclass) NOT NULL,
+    username character varying(50) NOT NULL,
+    password character varying(100) NOT NULL,
+    role character varying(20) DEFAULT 'student'::character varying NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    name character varying(50),
+    student_id character varying(32),
+    grade character varying(16),
+    major character varying(64),
+    class character varying(32),
+    PRIMARY KEY (id),
+    UNIQUE (username),
+    UNIQUE (student_id)
+);
+```
+
+**`login_attempts` - 登录尝试记录表**
+```sql
+CREATE TABLE login_attempts (
+    username character varying(100) NOT NULL,
+    count integer(32) DEFAULT 0 NOT NULL,
+    last_attempt timestamp with time zone DEFAULT now() NOT NULL,
+    PRIMARY KEY (username)
+);
+```
+
+#### 2. 学分管理相关表
+
+**`credits` - 学分申请表**
+```sql
+CREATE TABLE credits (
+    id integer(32) DEFAULT nextval('credits_id_seq'::regclass) NOT NULL,
+    user_id integer(32) NOT NULL,
+    type character varying(50) NOT NULL,
+    description text,
+    score numeric(4,2),
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    reject_reason character varying(255),
+    PRIMARY KEY (id)
+);
+```
+
+**`credits_proofs` - 学分证明材料表**
+```sql
+CREATE TABLE credits_proofs (
+    id integer(32) DEFAULT nextval('credits_proofs_id_seq'::regclass) NOT NULL,
+    credit_id integer(32),
+    file bytea NOT NULL,
+    filename character varying(255) NOT NULL,
+    mimetype character varying(128) NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+```
+
+#### 3. 公告管理表
+
+**`notices` - 公告表**
+```sql
+CREATE TABLE notices (
+    id integer(32) DEFAULT nextval('notices_id_seq'::regclass) NOT NULL,
+    title character varying(200) NOT NULL,
+    content text NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+```
+
+#### 4. 组织架构相关表
+
+**`grades` - 年级表**
+```sql
+CREATE TABLE grades (
+    id integer(32) DEFAULT nextval('grades_id_seq'::regclass) NOT NULL,
+    name character varying(32) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (name)
+);
+```
+
+**`majors` - 专业表**
+```sql
+CREATE TABLE majors (
+    id integer(32) DEFAULT nextval('majors_id_seq'::regclass) NOT NULL,
+    name character varying(64) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (name)
+);
+```
+
+**`classes` - 班级表**
+```sql
+CREATE TABLE classes (
+    id integer(32) DEFAULT nextval('classes_id_seq'::regclass) NOT NULL,
+    name character varying(32) NOT NULL,
+    grade_id integer(32),
+    major_id integer(32),
+    PRIMARY KEY (id),
+    UNIQUE (name),
+    UNIQUE (grade_id),
+    UNIQUE (major_id)
+);
+```
+
+### 数据库统计信息
+
+- **总表数**: 8个
+- **总索引数**: 16个（包含主键索引）
+- **总序列数**: 7个（自增ID序列）
+- **触发器数**: 0个
+- **视图数**: 0个
+
+### 表关系图
+
+```
+users (1) ←→ (N) credits (1) ←→ (N) credits_proofs
+  ↓
+login_attempts
+
+grades (1) ←→ (N) classes
+  ↑
+majors (1) ←→ (N) classes
+
+notices (独立表)
+```
+
+### 索引优化
+
+系统已为以下字段创建了索引以优化查询性能：
+
+- **users表**: username, student_id, role, created_at
+- **credits表**: user_id, type, status, created_at  
+- **credits_proofs表**: credit_id, created_at
+- **notices表**: created_at
+- **classes表**: name, grade_id, major_id（复合唯一索引）
 
 ## 🔒 安全特性
 
@@ -173,6 +282,7 @@ student/
 - ✅ **CSRF防护**: CSRF token 机制，防止跨站请求伪造
 - ✅ **错误处理**: 安全的错误信息处理，避免信息泄露
 - ✅ **数据保护**: 密码加密存储，参数化查询防止SQL注入
+- ✅ **登录保护**: 通过 `login_attempts` 表防止暴力破解
 
 ### 安全最佳实践
 
@@ -221,6 +331,38 @@ student/
 ```sql
 -- migrations/YYYYMMDD_description.sql
 -- 添加你的SQL语句
+```
+
+### 数据库维护
+
+#### 备份数据库
+```bash
+# 完整备份
+pg_dump -h localhost -U postgres -d student_credits > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# 仅结构备份
+pg_dump -h localhost -U postgres -d student_credits --schema-only > schema_backup.sql
+
+# 仅数据备份
+pg_dump -h localhost -U postgres -d student_credits --data-only > data_backup.sql
+```
+
+#### 恢复数据库
+```bash
+psql -h localhost -U postgres -d student_credits < backup_file.sql
+```
+
+#### 定期维护
+```sql
+-- 清理过期数据
+DELETE FROM login_attempts WHERE last_attempt < CURRENT_TIMESTAMP - INTERVAL '30 days';
+DELETE FROM credits WHERE status = 'rejected' AND created_at < CURRENT_TIMESTAMP - INTERVAL '1 year';
+
+-- 更新统计信息
+ANALYZE users;
+ANALYZE credits;
+ANALYZE credits_proofs;
+ANALYZE notices;
 ```
 
 ## 🚀 部署
@@ -305,7 +447,7 @@ Authorization: Bearer <token>
 
 ## 🐛 故障排除
 
-### 常见问题·
+### 常见问题
 
 1. **数据库连接失败**
    - 检查数据库服务是否启动
@@ -321,6 +463,11 @@ Authorization: Bearer <token>
    - 检查 JWT token 是否有效
    - 确认用户角色配置
    - 验证 API 路由权限设置
+
+4. **数据库结构问题**
+   - 使用导出的结构文件重新创建数据库
+   - 检查索引是否正确创建
+   - 验证外键约束是否完整
 
 ### 日志查看
 
@@ -354,3 +501,6 @@ MIT License
 - 安全措施完善
 - 权限控制系统
 - 文件上传功能
+- 完整的数据库结构
+- 组织架构管理
+- 登录安全保护机制
