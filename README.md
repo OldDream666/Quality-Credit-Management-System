@@ -1,5 +1,5 @@
-# 学生素质学分管理系统
-
+# <div align=center>学生素质学分管理系统</div>
+<div align=center><img src="https://github.com/OldDream666/Quality-Credit-Management-System/images/user_dashboard.png"></div>
 一个基于 Next.js + TypeScript + PostgreSQL 的现代化学生素质学分管理系统，支持学分申请、审批、用户管理等功能。
 
 ## ✨ 功能特性
@@ -61,7 +61,7 @@ cp env.example .env.local
 createdb student_credits
 
 # 导入完整的数据库结构
-psql -d student_credits -f database_schema_export_2025-06-29T08-57-35.sql
+psql -d migrations\database_schema.sql
 ```
 
 5. **启动开发服务器**
@@ -237,29 +237,6 @@ CREATE TABLE classes (
     UNIQUE (grade_id),
     UNIQUE (major_id)
 );
-```
-
-### 数据库统计信息
-
-- **总表数**: 8个
-- **总索引数**: 16个（包含主键索引）
-- **总序列数**: 7个（自增ID序列）
-- **触发器数**: 0个
-- **视图数**: 0个
-
-### 表关系图
-
-```
-users (1) ←→ (N) credits (1) ←→ (N) credits_proofs
-  ↓
-login_attempts
-
-grades (1) ←→ (N) classes
-  ↑
-majors (1) ←→ (N) classes
-
-notices (独立表)
-```
 
 ### 索引优化
 
@@ -305,7 +282,6 @@ notices (独立表)
    - 会话超时设置
    - 多因素认证（可选）
 
-详细的安全配置请参考 [SECURITY.md](./SECURITY.md)
 
 ## 🛠️ 开发指南
 
@@ -491,7 +467,7 @@ MIT License
 如有问题或建议，请通过以下方式联系：
 
 - 邮箱：2876757609@qq.com
-- 问题反馈：[GitHub Issues](https://github.com/Quality-Credit-Management-System/issues)
+- 问题反馈：[GitHub Issues](https://github.com/OldDream666/Quality-Credit-Management-System/issues)
 
 ## 📋 更新日志
 
