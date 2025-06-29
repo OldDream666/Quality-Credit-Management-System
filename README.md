@@ -343,12 +343,12 @@ MIT License
 
 如有问题或建议，请通过以下方式联系：
 
-- 邮箱：support@example.com
-- 问题反馈：[GitHub Issues](https://github.com/your-repo/issues)
+- 邮箱：2876757609@qq.com
+- 问题反馈：[GitHub Issues](https://github.com/Quality-Credit-Management-System/issues)
 
 ## 📋 更新日志
 
-### v1.0.0 (2024-01-XX)
+### v1.0.0 (2025-06-29)
 - 初始版本发布
 - 基础功能实现
 - 安全措施完善
