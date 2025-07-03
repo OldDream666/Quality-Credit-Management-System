@@ -3,44 +3,35 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getPasswordStrength } from "@/lib/validation";
 import { toast, Toaster } from "react-hot-toast";
+import { getRoleLabel } from '@/lib/utils';
+import { useAuth } from "@/hooks/AuthProvider";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const { user, loading } = useAuth();
   const [token, setToken] = useState("");
   const [oldPwd, setOldPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [systemConfigs, setSystemConfigs] = useState<any>({ roles: [], statuses: [], creditTypes: [] });
+  const [configLoaded, setConfigLoaded] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (!t) {
-      toast.error("请先登录");
-      setCheckingAuth(false);
-      setTimeout(() => router.replace("/login"), 1500);
-      return;
-    }
-    setToken(t);
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.user) {
-          toast.error("请先登录");
-          setCheckingAuth(false);
-          setTimeout(() => router.replace("/login"), 1500);
-        } else {
-          setUser(data.user);
-          setCheckingAuth(false);
+    fetch("/api/config/system")
+      .then(res => res.ok ? res.json() : null)
+      .then(configData => {
+        if (configData) {
+          setSystemConfigs({
+            roles: configData.roles || [],
+            statuses: configData.statuses || [],
+            creditTypes: configData.creditTypes || []
+          });
         }
+        setConfigLoaded(true);
       })
-      .catch(() => {
-        toast.error("请先登录");
-        setCheckingAuth(false);
-        setTimeout(() => router.replace("/login"), 1500);
-      });
-  }, [router]);
+      .catch(() => setConfigLoaded(true));
+  }, []);
 
   async function handleChangePwd(e: React.FormEvent) {
     e.preventDefault();
@@ -72,14 +63,14 @@ export default function ProfilePage() {
       return;
     }
 
-    setLoading(true);
+    setPwdLoading(true);
     const res = await fetch("/api/auth/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ old_password: oldPwd, new_password: newPwd })
     });
     const data = await res.json();
-    setLoading(false);
+    setPwdLoading(false);
     if (res.ok) {
       toast.success("密码修改成功");
       setOldPwd(""); 
@@ -91,17 +82,10 @@ export default function ProfilePage() {
   }
 
   function roleLabel(role: string) {
-    switch (role) {
-      case 'admin': return '管理员';
-      case 'student': return '学生';
-      case 'monitor': return '班长';
-      case 'league_secretary': return '团支书';
-      case 'study_committee': return '学习委员';
-      default: return role;
-    }
+    return getRoleLabel(role as any, systemConfigs.roles) || role;
   }
 
-  if (checkingAuth) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
+  if (loading || !configLoaded) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
   if (!user) return <div className="p-8 text-center">加载中...</div>;
 
   return (
@@ -161,9 +145,9 @@ export default function ProfilePage() {
         <button
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded shadow transition w-full"
           type="submit"
-          disabled={loading}
+          disabled={pwdLoading}
         >
-          {loading ? "提交中..." : "修改密码"}
+          {pwdLoading ? "提交中..." : "修改密码"}
         </button>
       </form>
     </div>

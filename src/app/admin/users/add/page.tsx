@@ -1,46 +1,19 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import AddUserForm from "../AddUserForm";
 import { useRouter } from "next/navigation";
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
+import { useAuth } from "@/hooks/AuthProvider";
 
 export default function AddUserPage() {
-  const [token, setToken] = useState("");
+  const { user, loading } = useAuth();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
   const [importResult, setImportResult] = useState<any[]>([]);
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (!t) {
-      toast.error("请先登录");
-      setCheckingAuth(false);
-      setTimeout(() => router.replace("/login"), 1500);
-      return;
-    }
-    setToken(t);
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.user) {
-          toast.error("请先登录");
-          setCheckingAuth(false);
-          setTimeout(() => router.replace("/login"), 1500);
-        } else if (data.user.role !== "admin") {
-          toast.error("无权限访问该页面");
-          setCheckingAuth(false);
-          setTimeout(() => router.replace("/dashboard"), 1500);
-        } else {
-          setCheckingAuth(false);
-        }
-      })
-      .catch(() => {
-        toast.error("请先登录");
-        setCheckingAuth(false);
-        setTimeout(() => router.replace("/login"), 1500);
-      });
-  }, [router]);
+  if (loading) return <div className="text-center mt-12 text-gray-500">权限校验中...</div>;
+  if (!user || user.role !== "admin") return <div className="text-center mt-12 text-red-600">无权限</div>;
 
   async function handleImport(e: React.FormEvent) {
     e.preventDefault();
@@ -66,11 +39,8 @@ export default function AddUserPage() {
     }
   }
 
-  if (checkingAuth) return <div className="text-center mt-12 text-gray-500">权限校验中...</div>;
-
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-8 bg-white/90 rounded-xl shadow-lg mt-6 sm:mt-12">
-      <Toaster position="top-center" />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-blue-700">添加用户/批量导入</h1>
         <button
@@ -84,7 +54,7 @@ export default function AddUserPage() {
         {/* 单个添加 */}
         <div className="flex-1 mb-8 sm:mb-0 bg-white/0">
           <h2 className="font-bold mb-2">单个添加</h2>
-          <AddUserForm token={token} onSuccess={() => toast.success("添加成功")} />
+          <AddUserForm token={token} onSuccess={() => {}} />
         </div>
         {/* 批量导入 */}
         <div className="flex-1 bg-white/0">
@@ -104,9 +74,12 @@ export default function AddUserPage() {
                   if (errorMsg && errorMsg.includes('角色必须为')) {
                     errorMsg = '角色必须为 学生/班长/团支书/学习委员/管理员';
                   }
+                  let statusMsg = '';
+                  if (r.status === '新增') statusMsg = '✔️ 新增成功';
+                  else if (r.status === '更新') statusMsg = '✔️ 已更新';
                   return (
-                    <li key={i} className={r.success ? "text-green-700" : "text-red-600"}>
-                      {label} {r.success ? "✔️" : `❌ ${errorMsg}`}
+                    <li key={i} className={statusMsg ? "text-green-700" : "text-red-600"}>
+                      {label} {statusMsg || `❌ ${errorMsg || r.status || '导入失败'}`}
                     </li>
                   );
                 })}

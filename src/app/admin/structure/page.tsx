@@ -4,7 +4,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 export default function StructurePage() {
   const router = useRouter();
@@ -265,7 +265,6 @@ export default function StructurePage() {
 
   return (
     <div className="min-h-screen flex justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-0 py-8">
-      <Toaster position="top-center" />
       <div className="w-[80vw] max-w-[1500px] bg-white rounded-xl shadow-lg p-8 flex gap-12 relative overflow-x-auto">
         {/* 返回按钮 */}
         <div className="absolute left-6 top-6 z-10">

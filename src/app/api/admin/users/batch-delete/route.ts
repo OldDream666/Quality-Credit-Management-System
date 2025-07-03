@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { verifyJwt } from "@/lib/jwt";
+import { requireRole } from '@/lib/auth';
 
 // POST /api/admin/users/batch-delete
-export async function POST(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (!auth || !auth.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "未认证" }, { status: 401 });
-  }
-  const token = auth.replace("Bearer ", "");
-  const payload = verifyJwt(token);
-  if (!payload || typeof payload === 'string' || payload.role !== 'admin') {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
-  }
+export const POST = requireRole(['admin'])(async (req, user) => {
   let ids: number[] = [];
   try {
     const body = await req.json();
@@ -29,4 +21,4 @@ export async function POST(req: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "批量删除失败" }, { status: 500 });
   }
-}
+});

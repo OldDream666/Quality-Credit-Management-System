@@ -123,7 +123,7 @@ export const validationRules = {
   },
   creditType: {
     required: true,
-    enum: ['个人活动', '个人比赛', '个人证书', '志愿活动'],
+    // enum 在运行时动态获取，不再硬编码
   },
   activityName: {
     required: true,

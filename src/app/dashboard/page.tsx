@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRoleLabel, getStatusColor, getCreditTypeColor, formatDate } from "@/lib/utils";
+import { getRoleLabel, getStatusColor, getStatusLabel, getCreditTypeColor, getCreditTypeLabel, formatDate } from "@/lib/utils";
 import { ChevronUpIcon, ChevronDownIcon, MegaphoneIcon } from "@heroicons/react/24/outline";
 import Button from "@/components/ui/Button";
+import { useAuth } from "@/hooks/AuthProvider";
 
 // 新增：简单公告类型
 interface Notice {
@@ -13,20 +14,33 @@ interface Notice {
   created_at: string;
 }
 
+// 获取活动名称的函数（基于字段内容推测）
+const getActivityName = (type: string, desc: any) => {
+  // 直接根据已知字段获取活动名称
+  if (desc.activityName) return desc.activityName;
+  if (desc.competitionName) return desc.competitionName;
+  if (desc.certificateName) return desc.certificateName;
+  if (desc.volunteerName) {
+    return desc.volunteerName + (desc.volunteerHours ? `-${desc.volunteerHours}h` : '');
+  }
+  
+  return null;
+};
+
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
+  const { user, loading } = useAuth();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
   const [credits, setCredits] = useState<any[]>([]);
-  const [token, setToken] = useState<string>("");
   const [approvals, setApprovals] = useState<any[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]); // 公告
-  const [expandedNotices, setExpandedNotices] = useState<Record<number, boolean>>({}); // 新增：控制公告展开状态
+  const [expandedNotices, setExpandedNotices] = useState<Record<number, boolean>>({});
   const [detailOpen, setDetailOpen] = useState(false); // 详情弹窗
   const [detailItem, setDetailItem] = useState<any>(null);
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [systemConfigs, setSystemConfigs] = useState<any>({ roles: [], statuses: [], creditTypes: [] });
+  const [configLoaded, setConfigLoaded] = useState(false);
   const [error, setError] = useState("");
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [previewIndex, setPreviewIndex] = useState<number | null>(null); // 修复hooks顺序
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null); // 修改hooks顺序
   const router = useRouter();
   // 分页相关
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,67 +49,39 @@ export default function Dashboard() {
   const pagedCredits = credits.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (!t) {
-      setError("请先登录");
-      setLoading(false);
-      setCheckingAuth(false);
-      setTimeout(() => router.replace("/login"), 1500);
-      return;
-    }
-    setToken(t);
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.user) {
-          setError("请先登录");
-          setLoading(false);
-          setCheckingAuth(false);
-          setTimeout(() => router.replace("/login"), 1500);
-        } else {
-          setUser(data.user);
-          setLoading(false);
-          setCheckingAuth(false);
+    fetch("/api/config/system")
+      .then(res => res.ok ? res.json() : null)
+      .then(configData => {
+        if (configData) {
+          setSystemConfigs({
+            roles: configData.roles || [],
+            statuses: configData.statuses || [],
+            creditTypes: configData.creditTypes || []
+          });
         }
+        setConfigLoaded(true);
       })
-      .catch(() => {
-        setError("请先登录");
-        setLoading(false);
-        setCheckingAuth(false);
-        setTimeout(() => router.replace("/login"), 1500);
-      });
-    // 管理员获取全局审批数据
-    fetch("/api/credits/admin", { headers: { Authorization: `Bearer ${t}` } })
+      .catch(() => setConfigLoaded(true));
+    fetch("/api/credits/admin")
       .then(res => res.ok ? res.json() : { credits: [] })
       .then(data => {
         if (data.credits) setApprovals(data.credits);
       });
-    // 管理员获取所有用户
-    fetch("/api/users", { headers: { Authorization: `Bearer ${t}` } })
+    fetch("/api/users")
       .then(res => res.ok ? res.json() : { users: [] })
       .then(data => setAllUsers(data.users || []));
-    // 普通用户获取个人数据
-    fetch("/api/credits", { headers: { Authorization: `Bearer ${t}` } })
+    fetch("/api/credits")
       .then(res => res.json())
       .then(data => {
         setCredits(data.credits || []);
       });
-    // 获取公告
     fetch("/api/notices")
       .then(res => res.ok ? res.json() : { notices: [] })
       .then(data => setNotices(data.notices || []));
   }, [router]);
 
-  if (checkingAuth) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
-  if (error) return <div className="text-center mt-12 text-red-600">{error}</div>;
-  if (loading) return <div className="p-4 text-center">加载中...</div>;
-  if (!token || !user) return null;
-
-  const approvalRoles = [
-    'monitor', // 班长
-    'league_secretary', // 团支书
-    'study_committee' // 学习委员
-  ];
+  if (loading || !configLoaded) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
+  if (!user) return null;
 
   // 管理员仪表盘
   if (user.role === 'admin') {
@@ -104,11 +90,44 @@ export default function Dashboard() {
   const approved = approvals.filter((c:any)=>c.status==='approved').length;
   const rejected = approvals.filter((c:any)=>c.status==='rejected').length;
   const userCount = allUsers.length;
-  const adminCount = allUsers.filter(u=>u.role==='admin').length;
-  const monitorCount = allUsers.filter(u=>u.role==='monitor').length;
-  const leagueCount = allUsers.filter(u=>u.role==='league_secretary').length;
-  const studyCount = allUsers.filter(u=>u.role==='study_committee').length;
-  const studentCount = allUsers.filter(u=>u.role==='student').length;
+  
+  // 动态统计各角色数量（基于实际用户数据）
+  const roleStats: Record<string, { count: number; label: string; color: string }> = {};
+  
+  // 从用户数据中动态收集角色统计
+  allUsers.forEach(user => {
+    if (!roleStats[user.role]) {
+      roleStats[user.role] = {
+        count: 0,
+        label: getRoleLabel(user.role, systemConfigs.roles) || user.role,
+        color: getColorForRole(user.role)
+      };
+    }
+    roleStats[user.role].count++;
+  });
+
+  // 获取角色对应的颜色（动态获取）
+  function getColorForRole(role: string) {
+    if (systemConfigs.roles && systemConfigs.roles.length > 0) {
+      const config = systemConfigs.roles.find((r: any) => r.key === role);
+      return config?.cardColor || 'from-gray-50 to-gray-100';
+    }
+    return 'from-gray-50 to-gray-100'; // 默认颜色
+  }
+
+  // 获取角色对应的文字颜色（动态获取）
+  function getTextColorForRole(role: string) {
+    if (systemConfigs.roles && systemConfigs.roles.length > 0) {
+      const config = systemConfigs.roles.find((r: any) => r.key === role);
+      // 从color字段中提取文字颜色，如 "bg-blue-100 text-blue-700" -> "text-blue-700"
+      if (config?.color) {
+        const colorMatch = config.color.match(/text-[\w-]+/);
+        return colorMatch ? colorMatch[0] : 'text-gray-700';
+      }
+    }
+    return 'text-gray-700'; // 默认颜色
+  }
+  
   const latestUsers = [...allUsers].sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime()).slice(0,5);
 
   return (
@@ -121,6 +140,7 @@ export default function Dashboard() {
         <div className="flex gap-4">
           <button className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-green-300 text-lg" onClick={() => router.push("/admin/users")}>用户管理</button>
           <button className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-yellow-300 text-lg" onClick={() => router.push("/admin/notices")}>公告管理</button>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg" onClick={() => router.push("/admin/config")}>系统配置</button>
         </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
@@ -128,26 +148,13 @@ export default function Dashboard() {
           <div className="text-4xl font-bold text-blue-700">{userCount}</div>
           <div className="text-gray-600 mt-1">系统用户</div>
         </div>
-        <div className="rounded-xl p-5 bg-gradient-to-br from-gray-100 to-gray-200 shadow text-center">
-          <div className="text-2xl font-bold text-gray-700">{adminCount}</div>
-          <div className="text-gray-600 mt-1">管理员</div>
-        </div>
-        <div className="rounded-xl p-5 bg-gradient-to-br from-green-100 to-green-200 shadow text-center">
-          <div className="text-2xl font-bold text-green-700">{monitorCount}</div>
-          <div className="text-gray-600 mt-1">班长</div>
-        </div>
-        <div className="rounded-xl p-5 bg-gradient-to-br from-yellow-100 to-yellow-200 shadow text-center">
-          <div className="text-2xl font-bold text-yellow-700">{leagueCount}</div>
-          <div className="text-gray-600 mt-1">团支书</div>
-        </div>
-        <div className="rounded-xl p-5 bg-gradient-to-br from-purple-100 to-purple-200 shadow text-center">
-          <div className="text-2xl font-bold text-purple-700">{studyCount}</div>
-          <div className="text-gray-600 mt-1">学习委员</div>
-        </div>
-        <div className="rounded-xl p-5 bg-gradient-to-br from-blue-50 to-blue-100 shadow text-center">
-          <div className="text-2xl font-bold text-blue-700">{studentCount}</div>
-          <div className="text-gray-600 mt-1">学生</div>
-        </div>
+        {/* 动态生成角色统计卡片 */}
+        {Object.entries(roleStats).map(([roleKey, roleData]) => (
+          <div key={roleKey} className={`rounded-xl p-5 shadow text-center bg-gradient-to-br ${roleData.color}`}>
+            <div className={`text-2xl font-bold ${getTextColorForRole(roleKey)}`}>{roleData.count}</div>
+            <div className="text-gray-600 mt-1">{roleData.label}</div>
+          </div>
+        ))}
         <div className="rounded-xl p-5 bg-gradient-to-br from-blue-100 to-blue-200 shadow text-center">
           <div className="text-2xl font-bold text-blue-700">{total}</div>
           <div className="text-gray-600 mt-1">审批单</div>
@@ -175,7 +182,7 @@ export default function Dashboard() {
               <div>
                 <span className="font-semibold text-blue-700 mr-2">{u.username}</span>
                 <span className="text-gray-700">{u.name || '-'}</span>
-                <span className="ml-2 text-xs text-gray-400">角色：{getRoleLabel(u.role)}</span>
+                <span className="ml-2 text-xs text-gray-400">角色：{getRoleLabel(u.role, systemConfigs.roles)}</span>
               </div>
               <div className="text-xs text-gray-500 mt-1 sm:mt-0">注册时间：{formatDate(u.created_at)}</div>
             </li>
@@ -186,29 +193,45 @@ export default function Dashboard() {
   );
   }
   // 普通用户/班委仪表盘（统一渲染，按钮区根据 isApprover 控制审批入口）
-  const isApprover = approvalRoles.includes(user.role);
+  // 检查是否有审批权限（从系统配置中动态判断）
+  const userRoleConfig = systemConfigs.roles?.find((r: any) => r.key === user.role);
+  const userPermissions = Array.isArray(userRoleConfig?.permissions) ? userRoleConfig.permissions : [];
+  const isApprover = userPermissions.includes('credits.approve') || userPermissions.includes('credits.reject');
   const userApprovals = credits;
   const userTotalScore = (credits || []).filter((c: any) => c.status === 'approved').reduce((sum: number, c: any) => sum + Number(c.score), 0);
   
-  // 统计各类型分数
-  const typeScoreMap: Record<string, number> = {
-    "个人活动": 0,
-    "个人比赛": 0,
-    "个人证书": 0,
-    "志愿活动": 0
-  };
+  // 统计各类型分数（基于实际数据动态计算）
+  const typeScoreMap: Record<string, { score: number; label: string; color: string }> = {};
+  
+  // 从学分数据中动态收集类型统计
   (credits || []).forEach((c: any) => {
-    if (c.status === 'approved' && c.type && typeScoreMap.hasOwnProperty(c.type)) {
-      typeScoreMap[c.type] += Number(c.score) || 0;
+    if (c.status === 'approved' && c.type) {
+      if (!typeScoreMap[c.type]) {
+        typeScoreMap[c.type] = {
+          score: 0,
+          label: getCreditTypeLabel(c.type, systemConfigs.creditTypes), // 使用动态标签
+          color: getColorForCreditType(c.type)
+        };
+      }
+      typeScoreMap[c.type].score += Number(c.score) || 0;
     }
   });
+
+  // 获取学分类型对应的颜色（动态获取）
+  function getColorForCreditType(type: string) {
+    if (systemConfigs.creditTypes && systemConfigs.creditTypes.length > 0) {
+      const config = systemConfigs.creditTypes.find((t: any) => t.key === type);
+      return config?.cardColor || 'from-gray-50 to-gray-100';
+    }
+    return 'from-gray-50 to-gray-100'; // 默认颜色
+  }
 
   return (
     <div className="max-w-5xl mx-auto card mt-12 p-4 sm:p-10 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-primary mb-2">欢迎，{user.name}({user.username})</h1>
-          <div className="text-gray-500 text-base">角色：{getRoleLabel(user.role)}</div>
+          <div className="text-gray-500 text-base">角色：{getRoleLabel(user.role, systemConfigs.roles)}</div>
           <div className="text-gray-500 text-base">班级：{user.class || '-'}</div>
         </div>
         <div className="flex flex-row gap-4 items-center">
@@ -283,22 +306,12 @@ export default function Dashboard() {
         </div>
         {/* 各类型分数统计 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-          <div className="rounded-lg p-3 text-center shadow border border-blue-100 bg-gradient-to-br from-blue-100 to-blue-50">
-            <div className="text-base text-gray-700 font-semibold mb-1">个人活动</div>
-            <div className="text-xl font-bold text-blue-700">{typeScoreMap["个人活动"]}</div>
-          </div>
-          <div className="rounded-lg p-3 text-center shadow border border-green-100 bg-gradient-to-br from-green-100 to-green-50">
-            <div className="text-base text-gray-700 font-semibold mb-1">个人比赛</div>
-            <div className="text-xl font-bold text-green-700">{typeScoreMap["个人比赛"]}</div>
-          </div>
-          <div className="rounded-lg p-3 text-center shadow border border-purple-100 bg-gradient-to-br from-purple-100 to-purple-50">
-            <div className="text-base text-gray-700 font-semibold mb-1">个人证书</div>
-            <div className="text-xl font-bold text-purple-700">{typeScoreMap["个人证书"]}</div>
-          </div>
-          <div className="rounded-lg p-3 text-center shadow border border-yellow-100 bg-gradient-to-br from-yellow-100 to-yellow-50">
-            <div className="text-base text-gray-700 font-semibold mb-1">志愿活动</div>
-            <div className="text-xl font-bold text-yellow-700">{typeScoreMap["志愿活动"]}</div>
-          </div>
+          {Object.entries(typeScoreMap).map(([key, typeData]) => (
+            <div key={key} className={`rounded-lg p-3 text-center shadow bg-gradient-to-br ${typeData.color}`}>
+              <div className="text-base text-gray-700 font-semibold mb-1">{typeData.label}</div>
+              <div className="text-xl font-bold text-gray-800">{typeData.score}</div>
+            </div>
+          ))}
         </div>
       </div>
       <hr className="my-8 border-blue-200" />
@@ -316,14 +329,8 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {pagedCredits.length === 0 ? (
-              <tr><td colSpan={5} className="text-center text-gray-400 py-6">暂无审批记录</td></tr>
+              <tr><td colSpan={5} className="text-center text-gray-400 py-6">暂无提交记录</td></tr>
             ) : pagedCredits.map(c => {
-              // 状态转中文
-              const statusMap: Record<string, string> = {
-                approved: '已通过',
-                rejected: '已拒绝',
-                pending: '待审批',
-              };
               // 时间格式化 yyyy-MM-dd
               const date = c.created_at ? new Date(c.created_at) : null;
               const dateStr = date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : '';
@@ -333,18 +340,15 @@ export default function Dashboard() {
               return (
                 <tr key={c.id} className="border-t hover:bg-blue-50 transition">
                   <td className="py-2 px-3 align-middle">
-                    <div className="font-medium">{c.type}</div>
+                    <div className="font-medium">{getCreditTypeLabel(c.type, systemConfigs.creditTypes)}</div>
                     {(() => {
-                      if (c.type === '个人活动' && desc.activityName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.activityName}</div>;
-                      if (c.type === '个人比赛' && desc.competitionName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.competitionName}</div>;
-                      if (c.type === '个人证书' && desc.certificateName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.certificateName}</div>;
-                      if (c.type === '志愿活动' && desc.volunteerName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.volunteerName}</div>;
-                      return null;
+                      const activityName = getActivityName(c.type, desc);
+                      return activityName ? <div className="text-gray-500 text-xs whitespace-nowrap">{activityName}</div> : null;
                     })()}
                   </td>
                   <td className="py-2 px-3 align-middle text-center">{c.score}</td>
                   <td className="py-2 px-3 align-middle text-center">
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${getStatusColor(c.status)}`}>{statusMap[c.status] || c.status}</span>
+                    <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${getStatusColor(c.status, systemConfigs.statuses)}`}>{getStatusLabel(c.status, systemConfigs.statuses)}</span>
                   </td>
                   <td className="py-2 px-3 align-middle text-center">{dateStr}</td>
                   <td className="py-2 px-3 align-middle text-center">
@@ -406,11 +410,6 @@ export default function Dashboard() {
       </div>
       {/* 详情弹窗 */}
       {detailOpen && detailItem && (() => {
-        const statusMap: Record<string, string> = {
-          approved: '已通过',
-          rejected: '已拒绝',
-          pending: '待审批',
-        };
         // 只取图片类型
         const imageProofs = (detailItem.proofs || []).filter((p: any) => p.mimetype && p.mimetype.startsWith('image/'));
         // 解析description
@@ -421,18 +420,15 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md relative">
               <button className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl" onClick={() => setDetailOpen(false)}>&times;</button>
               <h3 className="text-lg font-bold mb-2">申请详情</h3>
-              <div className="mb-2"><span className="font-semibold">类型：</span>{detailItem.type}
+              <div className="mb-2"><span className="font-semibold">类型：</span>{getCreditTypeLabel(detailItem.type, systemConfigs.creditTypes)}
                 {/* 新增：显示各类型的名称 */}
                 {(() => {
-                  if (detailItem.type === '个人活动' && desc.activityName) return <span className="text-gray-500 text-xs ml-2">{desc.activityName}</span>;
-                  if (detailItem.type === '个人比赛' && desc.competitionName) return <span className="text-gray-500 text-xs ml-2">{desc.competitionName}</span>;
-                  if (detailItem.type === '个人证书' && desc.certificateName) return <span className="text-gray-500 text-xs ml-2">{desc.certificateName}</span>;
-                  if (detailItem.type === '志愿活动' && desc.volunteerName) return <span className="text-gray-500 text-xs ml-2">{desc.volunteerName}</span>;
-                  return null;
+                  const activityName = getActivityName(detailItem.type, desc);
+                  return activityName ? <span className="text-gray-500 text-xs ml-2">{activityName}</span> : null;
                 })()}
               </div>
               <div className="mb-2"><span className="font-semibold">分数：</span>{detailItem.score}</div>
-              <div className="mb-2"><span className="font-semibold">状态：</span><span className={`inline-block px-2 py-1 rounded text-xs font-bold ${getStatusColor(detailItem.status)}`}>{statusMap[detailItem.status] || detailItem.status}</span></div>
+              <div className="mb-2"><span className="font-semibold">状态：</span><span className={`inline-block px-2 py-1 rounded text-xs font-bold ${getStatusColor(detailItem.status, systemConfigs.statuses)}`}>{getStatusLabel(detailItem.status, systemConfigs.statuses)}</span></div>
               <div className="mb-2"><span className="font-semibold">提交时间：</span>{detailItem.created_at?.slice(0, 10)}</div>
               {detailItem.reject_reason && <div className="mb-2"><span className="font-semibold">驳回原因：</span><span className="text-red-600">{detailItem.reject_reason}</span></div>}
               {/* 仅有 proofs 且为数组且长度大于0时才显示证明材料 */}
@@ -446,8 +442,8 @@ export default function Dashboard() {
                         const imgIdx = imageProofs.findIndex((img: any) => img.id === p.id);
                         return (
                           <li key={idx} style={{ cursor: 'pointer', display: 'inline-block', marginRight: 8 }} onClick={() => setPreviewIndex(imgIdx)}>
-                            <span style={{ width: 40, height: 40, borderRadius: 4, display: 'inline-block', overflow: 'hidden', background: '#f3f4f6' }}>
-                              <AuthImage src={p.url} alt={p.name || `材料${idx + 1}`} token={token} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4, display: 'block' }} />
+                            <span style={{ maxWidth: 80, maxHeight: 80, borderRadius: 4, display: 'inline-block', overflow: 'hidden', background: '#f3f4f6' }}>
+                              <AuthImage src={p.url} alt={p.name || `材料${idx + 1}`} token={token} style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 4, display: 'block' }} />
                             </span>
                           </li>
                         );

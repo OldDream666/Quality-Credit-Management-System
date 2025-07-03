@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { requireAuth, requireCreditSubmit } from "@/lib/auth";
 import { validateObject, validationRules } from "@/lib/validation";
+import { DatabaseConfigManager } from "@/lib/dbConfig";
 import { CreditType } from "@/types";
 
 // 文件类型验证
@@ -33,6 +34,33 @@ export const POST = requireCreditSubmit(async (req, user) => {
     const volunteerName = formData.get('volunteerName') as string;
     const volunteerHours = formData.get('volunteerHours') as string;
 
+    // 动态获取可用的学分类型
+    const creditTypes = await DatabaseConfigManager.getAllCreditTypes();
+    const availableTypes = creditTypes.length > 0 
+      ? creditTypes.map(ct => ct.key)
+      : ['个人活动', '个人比赛', '个人证书', '志愿活动']; // 兜底配置
+
+    // 验证学分类型是否合法
+    if (!availableTypes.includes(type)) {
+      return NextResponse.json({ 
+        error: "无效的学分类型", 
+        details: [`学分类型必须是以下值之一: ${availableTypes.join(', ')}`]
+      }, { status: 400 });
+    }
+
+    // 动态字段校验和组装
+    const typeConfig = creditTypes.find(ct => ct.key === type);
+    const descObj: any = {};
+    if (typeConfig?.fields) {
+      for (const field of typeConfig.fields) {
+        const fieldKey = typeof field === 'string' ? field : field.key;
+        const value = formData.get(fieldKey);
+        if (value !== null && value !== undefined && value !== "") {
+          descObj[fieldKey] = value;
+        }
+      }
+    }
+
     // 输入验证
     const validationData: any = { type };
     if (type === '个人活动') validationData.activityName = activityName;
@@ -44,7 +72,7 @@ export const POST = requireCreditSubmit(async (req, user) => {
     }
 
     const validation = validateObject(validationData, {
-      type: validationRules.creditType,
+      // 不再使用包含enum的creditType规则，type已在上面验证过
       activityName: type === '个人活动' ? validationRules.activityName : { required: false },
       competitionName: type === '个人比赛' ? validationRules.competitionName : { required: false },
       certificateName: type === '个人证书' ? validationRules.certificateName : { required: false },
@@ -83,16 +111,6 @@ export const POST = requireCreditSubmit(async (req, user) => {
           }, { status: 400 });
         }
       }
-    }
-
-    // 组装description
-    const descObj: any = {};
-    if (type === '个人活动') descObj.activityName = activityName;
-    if (type === '个人比赛') descObj.competitionName = competitionName;
-    if (type === '个人证书') descObj.certificateName = certificateName;
-    if (type === '志愿活动') {
-      descObj.volunteerName = volunteerName;
-      descObj.volunteerHours = volunteerHours;
     }
 
     // 开始事务

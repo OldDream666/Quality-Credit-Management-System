@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Card from "@/components/ui/Card";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { toast } from 'react-hot-toast';
 
 function LoginPageInner() {
   const [username, setUsername] = useState("");
@@ -26,6 +27,10 @@ function LoginPageInner() {
       }
     }
   }, [user, loading, redirect, router]);
+
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,11 +80,6 @@ function LoginPageInner() {
             placeholder="请输入密码"
             required
           />
-          {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md space-y-1">
-              <p className="font-medium">{error}</p>
-            </div>
-          )}
           <Button
             type="submit"
             variant="primary"

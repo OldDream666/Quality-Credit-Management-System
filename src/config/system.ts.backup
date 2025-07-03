@@ -1,0 +1,433 @@
+/**
+ * 系统配置管理
+ * 统一管理系统中的角色、学分类型、权限等配置信息
+ */
+
+import { UserRole, CreditType } from '@/types';
+
+// ===== 角色配置 =====
+export interface RoleConfig {
+  key: UserRole;
+  label: string;
+  description: string;
+  color: string; // 标签颜色（如 bg-gray-300 text-gray-800）
+  cardColor: string; // 卡片背景渐变色（如 from-gray-100 to-gray-200）
+  permissions: string[];
+}
+
+export const ROLES_CONFIG: Record<UserRole, RoleConfig> = {
+  admin: {
+    key: 'admin',
+    label: '管理员',
+    description: '系统管理员，拥有最高权限',
+    color: 'bg-gray-300 text-gray-800',
+    cardColor: 'from-gray-100 to-gray-200',
+    permissions: ['*', 'users.manage', 'notices.manage', 'system.admin'] // 所有权限
+  },
+  monitor: {
+    key: 'monitor',
+    label: '班长',
+    description: '班级管理者，可审批本班学分申请',
+    color: 'bg-green-100 text-green-700',
+    cardColor: 'from-green-100 to-green-200',
+    permissions: ['credits.approve', 'credits.reject', 'credits.view', 'credits.submit', 'credits.view_own']
+  },
+  league_secretary: {
+    key: 'league_secretary',
+    label: '团支书',
+    description: '团支部书记，可审批本班学分申请',
+    color: 'bg-yellow-100 text-yellow-700',
+    cardColor: 'from-yellow-100 to-yellow-200',
+    permissions: ['credits.approve', 'credits.reject', 'credits.view', 'credits.submit', 'credits.view_own']
+  },
+  study_committee: {
+    key: 'study_committee',
+    label: '学习委员',
+    description: '学习委员，可审批本班学分申请',
+    color: 'bg-purple-100 text-purple-700',
+    cardColor: 'from-purple-100 to-purple-200',
+    permissions: ['credits.approve', 'credits.reject', 'credits.view', 'credits.submit', 'credits.view_own']
+  },
+  student: {
+    key: 'student',
+    label: '学生',
+    description: '普通学生，可申请学分',
+    color: 'bg-blue-100 text-blue-700',
+    cardColor: 'from-blue-50 to-blue-100',
+    permissions: ['credits.submit', 'credits.view_own']
+  }
+};
+
+// 获取角色配置
+export function getRoleConfig(role: UserRole): RoleConfig {
+  return ROLES_CONFIG[role];
+}
+
+// 获取角色标签
+export function getRoleLabel(role: UserRole | string): string {
+  if (role in ROLES_CONFIG) {
+    return ROLES_CONFIG[role as UserRole].label;
+  }
+  return role; // 返回原始值作为后备
+}
+
+// 获取角色颜色
+export function getRoleColor(role: UserRole | string): string {
+  if (role in ROLES_CONFIG) {
+    return ROLES_CONFIG[role as UserRole].color;
+  }
+  return 'bg-gray-100 text-gray-700'; // 默认颜色
+}
+
+// 获取所有角色选项（用于下拉菜单等）
+export function getRoleOptions(): Array<{ value: UserRole; label: string }> {
+  return Object.values(ROLES_CONFIG).map(config => ({
+    value: config.key,
+    label: config.label
+  }));
+}
+
+// 审批角色列表
+export const APPROVER_ROLES: UserRole[] = ['monitor', 'league_secretary', 'study_committee'];
+
+// 管理员角色列表
+export const ADMIN_ROLES: UserRole[] = ['admin'];
+
+// ===== 学分类型配置 =====
+export interface CreditTypeConfig {
+  key: CreditType;
+  label: string;
+  description: string;
+  color: string; // 标签/边框颜色
+  cardColor: string; // 卡片背景渐变色
+  fields: string[]; // 该类型需要的表单字段
+  defaultScore?: number; // 默认分数
+  scoreCalculation?: 'fixed' | 'time_based' | 'manual'; // 分数计算方式
+  scorePerHour?: number; // 按时长计算时，每小时对应的分数
+}
+
+export const CREDIT_TYPES_CONFIG: Record<CreditType, CreditTypeConfig> = {
+  '个人活动': {
+    key: '个人活动',
+    label: '个人活动',
+    description: '如学生会、社团、讲座、社会实践等校内外活动。需上传相关证明材料。',
+    color: 'bg-blue-100 text-blue-800',
+    cardColor: 'from-blue-50 to-blue-100',
+    fields: ['activityName', 'proofFiles'],
+    defaultScore: 15,
+    scoreCalculation: 'fixed'
+  },
+  '个人比赛': {
+    key: '个人比赛',
+    label: '个人比赛',
+    description: '如各类学科竞赛、技能大赛、文体比赛等。需上传获奖证书或成绩单。',
+    color: 'bg-purple-100 text-purple-800',
+    cardColor: 'from-purple-50 to-purple-100',
+    fields: ['competitionName', 'proofFiles'],
+    scoreCalculation: 'manual'
+  },
+  '个人证书': {
+    key: '个人证书',
+    label: '个人证书',
+    description: '如英语等级证书、计算机等级证书等国家或行业认证。需上传证书文件。',
+    color: 'bg-indigo-100 text-indigo-800',
+    cardColor: 'from-indigo-50 to-indigo-100',
+    fields: ['certificateName', 'proofFiles'],
+    scoreCalculation: 'manual'
+  },
+  '志愿活动': {
+    key: '志愿活动',
+    label: '志愿活动',
+    description: '如志愿服务、公益活动等，需准确填写活动名称和时长，并上传相关证明。',
+    color: 'bg-orange-100 text-orange-800',
+    cardColor: 'from-orange-50 to-orange-100',
+    fields: ['volunteerName', 'volunteerHours', 'proofFiles'],
+    scoreCalculation: 'time_based', // 按时长计算
+    scorePerHour: 6 // 每小时6分
+  }
+};
+
+// 获取学分类型配置
+export function getCreditTypeConfig(type: CreditType): CreditTypeConfig {
+  return CREDIT_TYPES_CONFIG[type];
+}
+
+// 获取学分类型标签
+export function getCreditTypeLabel(type: CreditType | string): string {
+  if (type in CREDIT_TYPES_CONFIG) {
+    return CREDIT_TYPES_CONFIG[type as CreditType].label;
+  }
+  return type; // 返回原始值作为后备
+}
+
+// 获取学分类型颜色
+export function getCreditTypeColor(type: CreditType | string): string {
+  if (type in CREDIT_TYPES_CONFIG) {
+    return CREDIT_TYPES_CONFIG[type as CreditType].color;
+  }
+  return 'bg-gray-100 text-gray-800'; // 默认颜色
+}
+
+// 获取所有学分类型选项（用于下拉菜单等）
+export function getCreditTypeOptions(): Array<{ value: CreditType; label: string }> {
+  return Object.values(CREDIT_TYPES_CONFIG).map(config => ({
+    value: config.key,
+    label: config.label
+  }));
+}
+
+// 计算推荐分数
+export function calculateRecommendedScore(type: CreditType, data: any): number | null {
+  const config = getCreditTypeConfig(type);
+  
+  switch (config.scoreCalculation) {
+    case 'fixed':
+      return config.defaultScore || 0;
+    case 'time_based':
+      if (data.volunteerHours) {
+        const hours = Number(data.volunteerHours) || 0;
+        const scorePerHour = config.scorePerHour || 0;
+        return hours * scorePerHour;
+      }
+      return null;
+    case 'manual':
+    default:
+      return null; // 需要手动输入
+  }
+}
+
+// ===== 状态配置 =====
+export interface StatusConfig {
+  key: string;
+  label: string;
+  color: string;
+}
+
+export const STATUS_CONFIG: Record<string, StatusConfig> = {
+  pending: {
+    key: 'pending',
+    label: '待审批',
+    color: 'bg-yellow-100 text-yellow-700'
+  },
+  approved: {
+    key: 'approved',
+    label: '已通过',
+    color: 'bg-green-100 text-green-700'
+  },
+  rejected: {
+    key: 'rejected',
+    label: '已拒绝',
+    color: 'bg-red-100 text-red-700'
+  }
+};
+
+// 获取状态配置
+export function getStatusConfig(status: string): StatusConfig {
+  return STATUS_CONFIG[status] || {
+    key: status,
+    label: status,
+    color: 'bg-gray-100 text-gray-700'
+  };
+}
+
+// 获取状态标签
+export function getStatusLabel(status: string): string {
+  return getStatusConfig(status).label;
+}
+
+// 获取状态颜色
+export function getStatusColor(status: string): string {
+  return getStatusConfig(status).color;
+}
+
+// ===== 权限配置 =====
+export interface PermissionConfig {
+  key: string;
+  label: string;
+  description: string;
+  category: 'credit' | 'user' | 'notice' | 'system';
+}
+
+export const PERMISSIONS_CONFIG: Record<string, PermissionConfig> = {
+  'credits.submit': {
+    key: 'credits.submit',
+    label: '提交学分申请',
+    description: '可以提交学分申请',
+    category: 'credit'
+  },
+  'credits.view_own': {
+    key: 'credits.view_own',
+    label: '查看个人学分',
+    description: '可以查看自己的学分申请',
+    category: 'credit'
+  },
+  'credits.view': {
+    key: 'credits.view',
+    label: '查看学分申请',
+    description: '可以查看本班级的学分申请',
+    category: 'credit'
+  },
+  'credits.approve': {
+    key: 'credits.approve',
+    label: '审批学分申请',
+    description: '可以审批通过学分申请',
+    category: 'credit'
+  },
+  'credits.reject': {
+    key: 'credits.reject',
+    label: '驳回学分申请',
+    description: '可以驳回学分申请',
+    category: 'credit'
+  },
+  'users.manage': {
+    key: 'users.manage',
+    label: '管理用户',
+    description: '可以添加、删除、修改用户',
+    category: 'user'
+  },
+  'notices.manage': {
+    key: 'notices.manage',
+    label: '管理公告',
+    description: '可以发布、编辑、删除公告',
+    category: 'notice'
+  },
+  'system.admin': {
+    key: 'system.admin',
+    label: '系统管理',
+    description: '系统管理员权限',
+    category: 'system'
+  }
+};
+
+// 获取权限配置
+export function getPermissionConfig(permission: string): PermissionConfig | null {
+  return PERMISSIONS_CONFIG[permission] || null;
+}
+
+// 获取权限标签
+export function getPermissionLabel(permission: string): string {
+  const config = getPermissionConfig(permission);
+  return config?.label || permission;
+}
+
+// 获取权限分类的所有权限
+export function getPermissionsByCategory(category: 'credit' | 'user' | 'notice' | 'system'): PermissionConfig[] {
+  return Object.values(PERMISSIONS_CONFIG).filter(p => p.category === category);
+}
+
+// 检查用户是否有指定权限
+export function hasPermission(userRole: UserRole, permission: string): boolean {
+  const roleConfig = getRoleConfig(userRole);
+  
+  // 管理员拥有所有权限
+  if (roleConfig.permissions.includes('*')) {
+    return true;
+  }
+  
+  return roleConfig.permissions.includes(permission);
+}
+
+// 检查用户是否有指定角色
+export function hasRole(userRole: UserRole, allowedRoles: UserRole[]): boolean {
+  return allowedRoles.includes(userRole);
+}
+
+// ===== 文件配置 =====
+export const FILE_CONFIG = {
+  // 允许的文件类型
+  ALLOWED_TYPES: [
+    'image/jpeg',
+    'image/jpg', 
+    'image/png',
+    'image/gif',
+    'application/pdf'
+  ],
+  // 最大文件大小 (10MB)
+  MAX_SIZE: 10 * 1024 * 1024,
+  // 最大文件数量
+  MAX_COUNT: 6
+};
+
+// ===== 验证配置 =====
+export const VALIDATION_CONFIG = {
+  // 密码配置
+  PASSWORD: {
+    MIN_LENGTH: 6,
+    REQUIRE_LETTER: true,
+    REQUIRE_NUMBER: true
+  },
+  // 学号配置
+  STUDENT_ID: {
+    PATTERN: /^\d{8,12}$/,
+    ERROR_MESSAGE: '学号应为8-12位数字'
+  },
+  // 用户名配置
+  USERNAME: {
+    MIN_LENGTH: 3,
+    MAX_LENGTH: 20,
+    PATTERN: /^[a-zA-Z0-9_]+$/,
+    ERROR_MESSAGE: '用户名只能包含字母、数字和下划线'
+  }
+};
+
+// ===== 字段配置 =====
+export const FIELD_LABELS: Record<string, string> = {
+  activityName: '活动名称',
+  competitionName: '比赛名称',
+  certificateName: '证书名称',
+  volunteerName: '志愿活动名称',
+  volunteerHours: '志愿时长',
+  organizationName: '组织机构',
+  eventDate: '活动日期',
+  duration: '持续时间',
+  location: '活动地点',
+  award: '获奖情况',
+  level: '活动级别',
+  score: '申请分数',
+  proofFiles: '证明材料',
+  remarks: '备注说明'
+};
+
+// 获取字段标签
+export function getFieldLabel(field: string): string {
+  return FIELD_LABELS[field] || field;
+}
+
+// ===== 导出配置管理器 =====
+export class ConfigManager {
+  // 获取所有角色
+  static getAllRoles() {
+    return Object.values(ROLES_CONFIG);
+  }
+  
+  // 获取所有学分类型
+  static getAllCreditTypes() {
+    return Object.values(CREDIT_TYPES_CONFIG);
+  }
+  
+  // 获取所有状态
+  static getAllStatuses() {
+    return Object.values(STATUS_CONFIG);
+  }
+  
+  // 获取所有权限
+  static getAllPermissions() {
+    return Object.values(PERMISSIONS_CONFIG);
+  }
+  
+  // 添加新角色（用于后续扩展）
+  static addRole(role: RoleConfig) {
+    // 这里可以实现动态添加角色的逻辑
+    // 在实际应用中，可能需要持久化到数据库
+    console.warn('动态添加角色功能尚未实现');
+  }
+  
+  // 添加新学分类型（用于后续扩展）
+  static addCreditType(creditType: CreditTypeConfig) {
+    // 这里可以实现动态添加学分类型的逻辑
+    // 在实际应用中，可能需要持久化到数据库
+    console.warn('动态添加学分类型功能尚未实现');
+  }
+}
+
+export default ConfigManager;

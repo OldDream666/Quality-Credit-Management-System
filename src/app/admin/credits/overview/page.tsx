@@ -1,66 +1,49 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/AuthProvider";
 
 export default function CreditsOverview() {
-  const [token, setToken] = useState("");
+  const { user, loading } = useAuth();
   const [approvals, setApprovals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState("");
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
+  const [systemConfigs, setSystemConfigs] = useState<any>({});
 
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (!t) {
-      setError("请先登录");
-      setCheckingAuth(false);
-      setTimeout(() => router.replace("/login"), 1500);
-      return;
-    }
-    setToken(t);
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
-      .then(res => res.json())
+    if (!user || loading) return;
+    fetch("/api/credits/admin")
+      .then(res => res.ok ? res.json() : { credits: [] })
       .then(data => {
-        if (!data.user) {
-          setError("请先登录");
-          setCheckingAuth(false);
-          setTimeout(() => router.replace("/login"), 1500);
-        } else {
-          setUser(data.user);
-          // 仅班委可访问审批页面
-          const allowedRoles = ["monitor", "league_secretary", "study_committee"];
-          if (!allowedRoles.includes(data.user.role)) {
-            setError("无权限访问该页面");
-            setCheckingAuth(false);
-            setTimeout(() => router.replace("/dashboard"), 1500);
-          } else {
-            // 拉取审批数据
-            fetch("/api/credits/admin", { headers: { Authorization: `Bearer ${t}` } })
-              .then(res => res.ok ? res.json() : { credits: [] })
-              .then(data => {
-                setApprovals(data.credits || []);
-                setLoading(false);
-                setCheckingAuth(false);
-              })
-              .catch(() => { 
-                setError("加载失败"); 
-                setLoading(false); 
-                setCheckingAuth(false);
-              });
-          }
-        }
+        setApprovals(data.credits || []);
+        setLoadingData(false);
       })
       .catch(() => {
-        setError("请先登录");
-        setCheckingAuth(false);
-        setTimeout(() => router.replace("/login"), 1500);
+        setError("加载失败");
+        setLoadingData(false);
       });
-  }, [router]);
+  }, [user, loading, router]);
 
-  if (checkingAuth) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
-  if (error) return <div className="text-center mt-12 text-red-600">{error}</div>;
+  useEffect(() => {
+    fetch("/api/config/system")
+      .then(res => res.ok ? res.json() : null)
+      .then(configData => {
+        if (configData) {
+          localStorage.setItem('systemConfigs', JSON.stringify(configData));
+          setSystemConfigs(configData);
+        }
+      });
+  }, []);
+
+  if (loading || loadingData || !systemConfigs.roles) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
+  if (!user) return <div className="text-center mt-12 text-red-600">无权限</div>;
+  if (user.role === 'admin') return <div className="text-center mt-12 text-red-600">无权限</div>;
+
+  const userRoleConfig = systemConfigs.roles?.find((r: any) => r.key === user.role);
+  const userPermissions = Array.isArray(userRoleConfig?.permissions) ? userRoleConfig.permissions : [];
+  const canApprove = userPermissions.includes('credits.approve') || userPermissions.includes('credits.view');
+  if (!canApprove) return <div className="text-center mt-12 text-red-600">无权限</div>;
 
   const total = approvals.length;
   const pending = approvals.filter((c:any)=>c.status==='pending').length;
@@ -123,7 +106,7 @@ export default function CreditsOverview() {
             <tbody>
               {approvals.length === 0 ? (
                 <tr><td colSpan={6} className="text-center text-gray-400 py-6">暂无审批记录</td></tr>
-              ) : approvals.slice(0, 10).map((c:any) => {
+              ) : approvals.slice(0, 5).map((c:any) => {
                 const statusMap: Record<string, string> = {
                   approved: '已通过',
                   rejected: '已拒绝',

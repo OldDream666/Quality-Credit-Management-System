@@ -1,20 +1,17 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-
-// 全局缓存对象，避免重复请求
-const proofFileCache: { [id: number]: string } = {};
+import { useAuth } from "@/hooks/AuthProvider";
 
 export default function CreditsHistoryPage() {
-  const [token, setToken] = useState("");
+  const { user, loading } = useAuth();
   const [records, setRecords] = useState<any[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [loadingData, setLoadingData] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
+  const [systemConfigs, setSystemConfigs] = useState<any>({});
 
   // 筛选状态
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,69 +20,42 @@ export default function CreditsHistoryPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [onlyMine, setOnlyMine] = useState(false);
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
+  const [fetched, setFetched] = useState(false);
+
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (!t) {
-      setError("请先登录");
-      setLoading(false);
-      setCheckingAuth(false);
-      setTimeout(() => router.replace("/login"), 1500);
-      return;
-    }
-    setToken(t);
-    // 获取当前用户信息
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
-      .then(res => res.json())
+    if (!user || loading || fetched) return;
+    setFetched(true);
+    fetch("/api/credits/admin?all=1")
+      .then(res => res.ok ? res.json() : { credits: [] })
       .then(data => {
-        if (!data.user) {
-          setError("请先登录");
-          setLoading(false);
-          setCheckingAuth(false);
-          setTimeout(() => router.replace("/login"), 1500);
+        if (data.credits) {
+          const historyRecords = data.credits.filter((c: any) => c.status !== 'pending');
+          setRecords(historyRecords);
+          setFilteredRecords(historyRecords);
         } else {
-          setUser(data.user);
-          // 仅班委可访问审批页面
-          const allowedRoles = ["monitor", "league_secretary", "study_committee"];
-          if (!allowedRoles.includes(data.user.role)) {
-            setError("无权限访问该页面");
-            setLoading(false);
-            setCheckingAuth(false);
-            setTimeout(() => router.replace("/dashboard"), 1500);
-          } else {
-            // 拉取历史审批数据
-            fetch("/api/credits/admin?all=1", { headers: { Authorization: `Bearer ${t}` } })
-              .then(res => res.ok ? res.json() : { credits: [] })
-              .then(data => {
-                if (data.credits) {
-                  const historyRecords = data.credits.filter((c: any) => c.status !== 'pending');
-                  setRecords(historyRecords);
-                  setFilteredRecords(historyRecords);
-                } else {
-                  setError(data.error || "加载失败");
-                }
-                setLoading(false);
-                setCheckingAuth(false);
-              })
-              .catch(() => { 
-                setError("加载失败"); 
-                setLoading(false); 
-                setCheckingAuth(false);
-              });
-          }
+          setError(data.error || "加载失败");
         }
+        setLoadingData(false);
       })
       .catch(() => {
-        setError("请先登录");
-        setLoading(false);
-        setCheckingAuth(false);
-        setTimeout(() => router.replace("/login"), 1500);
+        setError("加载失败");
+        setLoadingData(false);
       });
-  }, [router]);
+  }, [user, loading, fetched]);
+
+  useEffect(() => {
+    fetch("/api/config/system")
+      .then(res => res.ok ? res.json() : null)
+      .then(configData => {
+        if (configData) setSystemConfigs(configData);
+      });
+  }, []);
 
   // 筛选逻辑
   useEffect(() => {
@@ -94,6 +64,11 @@ export default function CreditsHistoryPage() {
     // 使用 setTimeout 来避免过于频繁的筛选
     const timeoutId = setTimeout(() => {
       let filtered = records;
+
+      // 新增：只看我审批的
+      if (onlyMine && user) {
+        filtered = filtered.filter(r => r.approver_id === user.id);
+      }
 
       // 搜索筛选
       if (searchTerm) {
@@ -137,7 +112,7 @@ export default function CreditsHistoryPage() {
     }, 300); // 300ms 防抖
 
     return () => clearTimeout(timeoutId);
-  }, [records, searchTerm, typeFilter, statusFilter, dateFrom, dateTo]);
+  }, [records, searchTerm, typeFilter, statusFilter, dateFrom, dateTo, onlyMine, user]);
 
   // 分页计算
   const totalPages = Math.ceil(filteredRecords.length / pageSize);
@@ -159,9 +134,12 @@ export default function CreditsHistoryPage() {
     setDateTo("");
   };
 
-  // 权限校验：审批权限角色可访问
-  if (checkingAuth) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
-  if (error) return <div className="text-center mt-12 text-red-600">{error}</div>;
+  if (loading || loadingData || !systemConfigs.roles) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
+  if (!user) return <div className="text-center mt-12 text-red-600">未登录</div>;
+  const userRoleConfig = systemConfigs.roles?.find((r: any) => r.key === user?.role);
+  const userPermissions = Array.isArray(userRoleConfig?.permissions) ? userRoleConfig.permissions : [];
+  const canView = user.role === 'admin' || userPermissions.includes('credits.view') || userPermissions.includes('system.admin');
+  if (!canView) return <div className="text-center mt-12 text-red-600">无权限</div>;
 
   // 获取所有类型和状态选项
   const allTypes = Array.from(new Set(records.map(r => r.type))).sort();
@@ -180,6 +158,10 @@ export default function CreditsHistoryPage() {
               <input type="text" placeholder="搜索姓名或学号..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <button onClick={() => setShowFilters(!showFilters)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">{showFilters ? '隐藏筛选' : '显示筛选'}</button>
+            <label className="flex items-center gap-2 ml-4 cursor-pointer select-none">
+              <input type="checkbox" checked={onlyMine} onChange={e => setOnlyMine(e.target.checked)} />
+              <span className="text-blue-700 text-sm">只看我审批的</span>
+            </label>
           </div>
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -230,7 +212,7 @@ export default function CreditsHistoryPage() {
           </div>
         </div>
         {error && <div className="text-red-600 mb-4">{error}</div>}
-        {loading ? (
+        {loadingData ? (
           <div className="text-center text-gray-500">加载中...</div>
         ) : filteredRecords.length === 0 ? (
           <div className="text-center text-gray-400 py-12">
@@ -251,6 +233,7 @@ export default function CreditsHistoryPage() {
                     <th className="py-2 px-3 w-20">分数</th>
                     <th className="py-2 px-3 w-40">证明材料</th>
                     <th className="py-2 px-3 w-28">状态</th>
+                    <th className="py-2 px-3 w-28">审批人</th>
                     <th className="py-2 px-3 w-36">审批时间</th>
                   </tr>
                 </thead>
@@ -266,7 +249,7 @@ export default function CreditsHistoryPage() {
                           if (r.type === '个人活动' && desc.activityName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.activityName}</div>;
                           if (r.type === '个人比赛' && desc.competitionName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.competitionName}</div>;
                           if (r.type === '个人证书' && desc.certificateName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.certificateName}</div>;
-                          if (r.type === '志愿活动' && desc.volunteerName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.volunteerName}</div>;
+                          if (r.type === '志愿活动' && desc.volunteerName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.volunteerName}-{desc.volunteerHours}h</div>;
                           return null;
                         })()}
                       </td>
@@ -282,6 +265,7 @@ export default function CreditsHistoryPage() {
                           {r.status === 'approved' ? '已通过' : r.status === 'rejected' ? '已拒绝' : r.status === 'pending' ? '待审批' : r.status}
                         </span>
                       </td>
+                      <td className="py-2 px-3 align-middle text-center">{r.approver_name || r.approver_id || '-'}</td>
                       <td className="py-2 px-3 align-middle text-center">{
                         formatDate(
                           r.approved_at || r.rejected_at || r.updated_at || r.created_at
@@ -375,104 +359,112 @@ function base64ToUint8Array(base64: string) {
 function ProofList({ proofs }: { proofs: any[] }) {
   const [urls, setUrls] = useState<{ [id: number]: string }>({});
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const cacheRef = useRef<{ [id: number]: string }>({});
+  const pendingRef = useRef<{ [id: number]: Promise<string> }>({});
 
   useEffect(() => {
     if (!proofs || !proofs.length) return;
-    
     const t = localStorage.getItem("token");
-    const uncachedProofs = proofs.filter(p => !proofFileCache[p.id] && !urls[p.id]);
-    
+    const uncachedProofs = proofs.filter(p => !cacheRef.current[p.id] && !urls[p.id] && typeof pendingRef.current[p.id] === 'undefined');
     if (uncachedProofs.length === 0) {
-      // 如果所有文件都已缓存，直接使用缓存
+      // 使用缓存的数据
       const cachedUrls = proofs.reduce((acc, p) => {
-        if (proofFileCache[p.id]) {
-          acc[p.id] = proofFileCache[p.id];
+        if (cacheRef.current[p.id]) {
+          acc[p.id] = cacheRef.current[p.id];
         }
         return acc;
       }, {} as { [id: number]: string });
-      
       if (Object.keys(cachedUrls).length > 0) {
         setUrls(cachedUrls);
       }
       return;
     }
-
-    // 使用批量获取API
+    // 批量获取文件
     const proofIds = uncachedProofs.map(p => p.id).join(',');
-    
-    fetch(`/api/credits/proof-file?ids=${proofIds}`, {
+    // 创建批量请求的 Promise
+    const batchRequest = fetch(`/api/credits/proof-file?ids=${proofIds}`, {
       headers: { Authorization: `Bearer ${t}` }
     })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data && data.files) {
           const newUrls: { [id: number]: string } = {};
-          
           data.files.forEach((fileData: any) => {
-            // base64转Uint8Array再转Blob
             const bytes = base64ToUint8Array(fileData.file);
             const blob = new Blob([bytes], { type: fileData.mimetype });
             const objectUrl = URL.createObjectURL(blob);
-            proofFileCache[fileData.id] = objectUrl; // 存入全局缓存
+            cacheRef.current[fileData.id] = objectUrl;
             newUrls[fileData.id] = objectUrl;
+            // 清理 pending 状态
+            delete pendingRef.current[fileData.id];
           });
-          
-          if (Object.keys(newUrls).length > 0) {
-            setUrls(prev => ({ ...prev, ...newUrls }));
-          }
+          return newUrls;
         }
+        return {};
       })
       .catch(error => {
-        console.error('批量获取文件失败:', error);
-        // 降级到单个文件获取
-        const loadPromises = uncachedProofs.map(p => 
-          fetch(`/api/credits/proof-file?id=${p.id}`, {
+        console.warn('批量请求失败，回退到单个请求:', error);
+        // 批量请求失败，回退到单个请求
+        const singleRequests = uncachedProofs.map(p => {
+          const request = fetch(`/api/credits/proof-file?id=${p.id}`, {
             headers: { Authorization: `Bearer ${t}` }
           })
             .then(res => res.ok ? res.blob() : null)
             .then(blob => {
               if (blob) {
                 const objectUrl = URL.createObjectURL(blob);
-                proofFileCache[p.id] = objectUrl;
+                cacheRef.current[p.id] = objectUrl;
+                delete pendingRef.current[p.id];
                 return { id: p.id, url: objectUrl };
               }
+              delete pendingRef.current[p.id];
               return null;
             })
-            .catch(() => null)
-        );
-
-        Promise.all(loadPromises).then(results => {
+            .catch(() => {
+              delete pendingRef.current[p.id];
+              return null;
+            });
+          pendingRef.current[p.id] = request.then(result => result?.url || '');
+          return request;
+        });
+        return Promise.all(singleRequests).then(results => {
           const newUrls = results.reduce((acc, result) => {
-            if (result) {
+            if (result && typeof result === 'object' && 'id' in result && 'url' in result) {
               acc[result.id] = result.url;
             }
             return acc;
           }, {} as { [id: number]: string });
-          
-          if (Object.keys(newUrls).length > 0) {
-            setUrls(prev => ({ ...prev, ...newUrls }));
-          }
+          return newUrls;
         });
       });
-
-    // 清理函数
+    // 标记所有未缓存的请求为 pending
+    uncachedProofs.forEach(p => {
+      if (!pendingRef.current[p.id]) {
+        pendingRef.current[p.id] = batchRequest.then(urls => urls[p.id] || '');
+      }
+    });
+    // 处理结果
+    batchRequest.then(newUrls => {
+      if (Object.keys(newUrls).length > 0) {
+        setUrls(prev => ({ ...prev, ...newUrls }));
+      }
+    });
     return () => {
-      // 注意：这里不清理全局缓存，让它在页面刷新时自动清理
+      // 清理函数：如果组件卸载，清理 pending 状态
+      uncachedProofs.forEach(p => {
+        delete pendingRef.current[p.id];
+      });
     };
-  }, [proofs]);
+  }, [JSON.stringify(proofs)]);
 
   if (!proofs || !proofs.length) return <>-</>;
-
-  // 只取图片类型
   const imageProofs = proofs.filter(p => p.mimetype && p.mimetype.startsWith('image/'));
-
   return (
     <>
       <div className="flex flex-wrap gap-2 mt-2">
         {proofs.map((p, idx) => {
-          const url = urls[p.id] || proofFileCache[p.id];
+          const url = urls[p.id] || cacheRef.current[p.id];
           if (p.mimetype && p.mimetype.startsWith('image/')) {
-            // 预览弹窗索引应为图片在imageProofs中的索引
             const imgIdx = imageProofs.findIndex(img => img.id === p.id);
             return (
               <span key={p.id} style={{ display: 'inline-block', cursor: 'pointer' }} onClick={() => setPreviewIndex(imgIdx)}>
@@ -503,6 +495,7 @@ function ProofList({ proofs }: { proofs: any[] }) {
               </span>
             );
           } else {
+            // pdf和其它类型都显示为下载链接
             return (
               <a 
                 key={p.id} 
@@ -518,10 +511,9 @@ function ProofList({ proofs }: { proofs: any[] }) {
           }
         })}
       </div>
-      {/* 图片预览弹窗 */}
       {previewIndex !== null && imageProofs[previewIndex] && (
         <ImagePreviewModal
-          proofs={imageProofs.map(img => ({ ...img, url: urls[img.id] || proofFileCache[img.id] }))}
+          proofs={imageProofs.map(img => ({ ...img, url: urls[img.id] || cacheRef.current[img.id] }))}
           index={previewIndex}
           onClose={() => setPreviewIndex(null)}
           onSwitch={i => setPreviewIndex(i)}

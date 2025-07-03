@@ -58,15 +58,14 @@ export function middleware(request: NextRequest) {
     try {
       const payload = verifyJwt(token); 
       if (payload && typeof payload !== 'string') {
-        // 检查管理员权限
+        // 检查管理员权限 - 在中间件层做基本检查，具体权限在API层验证
         if (isAdminRoute && payload.role !== 'admin') {
           return NextResponse.redirect(new URL('/dashboard', request.url));
         }
-        
-        // 检查审批权限
+        // 检查审批权限 - 在中间件层做基本检查，具体权限在API层验证
         if (isApproverRoute) {
-          const allowedRoles = ['admin', 'monitor', 'league_secretary', 'study_committee'];
-          if (!allowedRoles.includes(payload.role)) {
+          const commonApproverRoles = ['admin', 'monitor', 'league_secretary', 'study_committee'];
+          if (!commonApproverRoles.includes(payload.role)) {
             return NextResponse.redirect(new URL('/dashboard', request.url));
           }
         }

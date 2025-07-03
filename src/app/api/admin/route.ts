@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyJwt } from "@/lib/jwt";
+import { requireRole } from '@/lib/auth';
 
-export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  if (!auth || !auth.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "未认证" }, { status: 401 });
-  }
-  const token = auth.replace("Bearer ", "");
-  const payload = verifyJwt(token);
-  if (!payload || typeof payload === 'string' || payload.role !== 'admin') {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
-  }
+export const GET = requireRole(['admin'])(async (req, user) => {
   return NextResponse.json({ message: "管理员接口访问成功" });
-}
+});

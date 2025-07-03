@@ -18,7 +18,6 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',

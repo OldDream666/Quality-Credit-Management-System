@@ -180,8 +180,8 @@ export function requireRole(roles: string[]) {
 // 管理员权限中间件
 export const requireAdmin = requireRole(['admin']);
 
-// 审批权限中间件
-export const requireApprover = requireRole(['admin', 'monitor', 'league_secretary', 'study_committee']);
+// 审批权限中间件 - 改为基于权限而不是角色
+export const requireApprover = requirePermission('credits.approve');
 
 // 学分提交权限中间件
 export const requireCreditSubmit = requirePermission('credits.submit');

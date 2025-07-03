@@ -1,45 +1,23 @@
 import { UserRole, PermissionConfig } from '@/types';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { 
+  hasPermission as checkPermission,
+  APPROVER_ROLES
+} from '@/config/system';
 
 // 类名合并工具函数
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// 角色显示名称映射
-export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
-  admin: '管理员',
-  student: '学生',
-  monitor: '班长',
-  league_secretary: '团支书',
-  study_committee: '学习委员'
-};
-
-// 状态显示名称映射
-export const STATUS_DISPLAY_NAMES: Record<string, string> = {
-  pending: '待审批',
-  approved: '已通过',
-  rejected: '已拒绝'
-};
-
-// 状态颜色映射
-export const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  approved: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700'
-};
-
-// 权限检查函数
-export function getPermissions(role: UserRole): PermissionConfig {
-  const isAdmin = role === 'admin';
-  const isApprover = ['admin', 'monitor', 'league_secretary', 'study_committee'].includes(role);
-  
+// 权限检查函数（简化为基于权限数组的检查）
+export function getPermissions(userPermissions: string[]): PermissionConfig {
   return {
-    canApprove: isApprover,
-    canManageUsers: isAdmin,
-    canManageNotices: isAdmin,
-    canViewAllCredits: isApprover
+    canApprove: userPermissions.includes('credits.approve') || userPermissions.includes('*'),
+    canManageUsers: userPermissions.includes('users.manage') || userPermissions.includes('*'),
+    canManageNotices: userPermissions.includes('notices.manage') || userPermissions.includes('*'),
+    canViewAllCredits: userPermissions.some(p => ['credits.approve', 'credits.view', '*'].includes(p))
   };
 }
 
@@ -144,37 +122,58 @@ export function getUserDisplayName(user: any): string {
   return user.name ? `${user.name}(${user.username})` : user.username;
 }
 
-// 角色名称转换
-export function getRoleLabel(role: string): string {
-  const roleLabels: Record<string, string> = {
-    admin: '管理员',
-    monitor: '班长',
-    league_secretary: '团支书',
-    study_committee: '学习委员',
-    student: '学生'
-  };
-  return roleLabels[role] || role;
+// 角色名称转换（动态获取，无硬编码）
+export function getRoleLabel(role: string, roleConfigs?: any[]): string {
+  if (roleConfigs) {
+    const config = roleConfigs.find(r => r.key === role);
+    return config?.label || role;
+  }
+  return role; // 无配置时直接返回原值
 }
 
-// 状态颜色
-export function getStatusColor(status: string): string {
-  const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800'
-  };
-  return statusColors[status] || 'bg-gray-100 text-gray-800';
+// 角色颜色（动态获取，无硬编码）
+export function getRoleColor(role: string, roleConfigs?: any[]): string {
+  if (roleConfigs) {
+    const config = roleConfigs.find(r => r.key === role);
+    return config?.color || 'bg-gray-100 text-gray-700';
+  }
+  return 'bg-gray-100 text-gray-700'; // 默认颜色
 }
 
-// 学分类型颜色
-export function getCreditTypeColor(type: string): string {
-  const typeColors: Record<string, string> = {
-    '个人活动': 'bg-blue-100 text-blue-800',
-    '个人比赛': 'bg-purple-100 text-purple-800',
-    '个人证书': 'bg-indigo-100 text-indigo-800',
-    '志愿活动': 'bg-orange-100 text-orange-800'
-  };
-  return typeColors[type] || 'bg-gray-100 text-gray-800';
+// 状态标签（动态获取，无硬编码）
+export function getStatusLabel(status: string, statusConfigs?: any[]): string {
+  if (statusConfigs) {
+    const config = statusConfigs.find(s => s.key === status);
+    return config?.label || status;
+  }
+  return status; // 无配置时直接返回原值
+}
+
+// 状态颜色（动态获取，无硬编码）
+export function getStatusColor(status: string, statusConfigs?: any[]): string {
+  if (statusConfigs) {
+    const config = statusConfigs.find(s => s.key === status);
+    return config?.color || 'bg-gray-100 text-gray-700';
+  }
+  return 'bg-gray-100 text-gray-700'; // 默认颜色
+}
+
+// 学分类型颜色（动态获取，无硬编码）
+export function getCreditTypeColor(type: string, typeConfigs?: any[]): string {
+  if (typeConfigs) {
+    const config = typeConfigs.find(t => t.key === type);
+    return config?.color || 'bg-gray-100 text-gray-800';
+  }
+  return 'bg-gray-100 text-gray-800'; // 默认颜色
+}
+
+// 学分类型标签（动态获取，无硬编码）
+export function getCreditTypeLabel(type: string, typeConfigs?: any[]): string {
+  if (typeConfigs) {
+    const config = typeConfigs.find(t => t.key === type);
+    return config?.label || type;
+  }
+  return type; // 无配置时直接返回原值
 }
 
 // 生成随机字符串

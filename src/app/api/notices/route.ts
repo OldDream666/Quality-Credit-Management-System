@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { verifyJwt } from "@/lib/jwt";
+import { requireRole } from '@/lib/auth';
 
 // 查询所有公告（按时间倒序）
 export async function GET() {
@@ -9,16 +10,7 @@ export async function GET() {
 }
 
 // 新增公告（仅管理员）
-export async function POST(req: Request) {
-  const auth = req.headers.get("authorization");
-  if (!auth || !auth.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "未认证" }, { status: 401 });
-  }
-  const token = auth.replace("Bearer ", "");
-  const payload = verifyJwt(token);
-  if (!payload || typeof payload === 'string' || payload.role !== 'admin') {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
-  }
+export const POST = requireRole(['admin'])(async (req, user) => {
   const { title, content } = await req.json();
   if (!title || !content) {
     return NextResponse.json({ error: "标题和内容不能为空" }, { status: 400 });
@@ -28,4 +20,4 @@ export async function POST(req: Request) {
     [title, content]
   );
   return NextResponse.json({ notice: result.rows[0] });
-}
+});
