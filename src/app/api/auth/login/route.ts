@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import pool from "@/lib/db";
+import { safeQuery } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { signJwt } from "@/lib/jwt";
 import { validateObject, validationRules } from "@/lib/validation";
@@ -70,9 +70,9 @@ export async function POST(req: Request) {
     }
 
     // 支持用 student_id 或 username 登录
-    let result = await pool.query('SELECT * FROM users WHERE student_id = $1', [username]);
+    let result = await safeQuery('SELECT * FROM users WHERE student_id = $1', [username]);
     if (result.rowCount === 0) {
-      result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+      result = await safeQuery('SELECT * FROM users WHERE username = $1', [username]);
     }
     if (result.rowCount === 0) {
       return NextResponse.json({ 
