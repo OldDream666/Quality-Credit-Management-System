@@ -84,10 +84,12 @@ student/
 │   │   ├── admin/       # 管理员页面
 │   │   ├── credits/     # 学分申请页面
 │   │   ├── dashboard/   # 仪表盘
-│   │   └── login/       # 登录页面
+│   │   ├── login/       # 登录页面
+        └── profile/     # 个人信息页面
 │   ├── components/      # React组件
 │   │   ├── ui/          # 通用UI组件
-│   │   └── Navbar.tsx   # 导航栏
+│   │   ├── Navbar.tsx
+        └── RichTextEditor   # 富文本编辑
 │   ├── hooks/           # 自定义Hook
 │   ├── lib/             # 工具库
 │   │   ├── api.ts       # API客户端
@@ -101,153 +103,28 @@ student/
 ├── middleware.ts        # Next.js中间件
 ├── next.config.ts       # Next.js配置
 ├── tailwind.config.js   # Tailwind CSS配置
-├── SECURITY.md          # 安全配置文档
 └── package.json         # 项目依赖
 ```
 
-## 🔧 配置说明
+> 角色、学分类型、状态等配置均存储于 system_config 表，无单独 roles 表。
 
-### 环境变量
+## 🔧 数据库表结构
 
-| 变量名                  | 说明                   | 示例值                        |
-|-------------------------|------------------------|-------------------------------|
-| PGUSER                  | 数据库用户名           | postgres                      |
-| PGPASSWORD              | 数据库密码             | your_password                 |
-| PGHOST                  | 数据库主机             | localhost                     |
-| PGDATABASE              | 数据库名               | student_credits               |
-| PGPORT                  | 数据库端口             | 5432                          |
-| JWT_SECRET              | JWT密钥                | your_jwt_secret               |
-| NODE_ENV                | 运行环境               | development/production        |
-| NEXT_PUBLIC_APP_NAME    | 应用名称               | 学生素质学分管理系统          |
-| NEXT_PUBLIC_APP_VERSION | 应用版本               | 1.0.0                         |
-| MAX_FILE_SIZE           | 上传文件最大字节数     | 10485760                      |
-| ALLOWED_FILE_TYPES      | 允许的文件类型         | image/jpeg,application/pdf     |
-| CORS_ORIGIN             | 允许的前端地址         | http://localhost:3000         |
+### 主要表结构（部分字段）
 
-> 请根据实际部署环境填写 `.env` 文件，敏感信息切勿上传到仓库。
+| 表名            | 字段（部分）                                                                                 | 说明                       |
+|-----------------|---------------------------------------------------------------------------------------------|----------------------------|
+| users           | id, username, password, role, name, student_id, grade, major, class, created_at             | 用户信息，username/student_id 唯一 |
+| grades          | id, name                                                                                    | 年级                       |
+| majors          | id, name                                                                                    | 专业                       |
+| classes         | id, name, grade_id, major_id                                                                | 班级，(name, grade_id, major_id) 组合唯一 |
+| credits         | id, user_id, type, description, score, status, created_at, approver_id, approved_at         | 学分申请                   |
+| credits_proofs  | id, credit_id, file, filename, mimetype, created_at                                         | 学分证明材料               |
+| notices         | id, title, content, created_at                                                              | 公告                       |
+| login_attempts  | username, count, last_attempt                                                               | 登录尝试记录               |
+| system_config   | id, category, config_key, config_value, is_active, created_at, updated_at                   | 系统配置（角色、类型等）   |
 
-### 数据库表结构
-
-
-#### 1. 用户管理相关表
-
-**`users` - 用户表**
-```sql
-CREATE TABLE users (
-    id integer(32) DEFAULT nextval('users_id_seq'::regclass) NOT NULL,
-    username character varying(50) NOT NULL,
-    password character varying(100) NOT NULL,
-    role character varying(20) DEFAULT 'student'::character varying NOT NULL,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    name character varying(50),
-    student_id character varying(32),
-    grade character varying(16),
-    major character varying(64),
-    class character varying(32),
-    PRIMARY KEY (id),
-    UNIQUE (username),
-    UNIQUE (student_id)
-);
-```
-
-**`login_attempts` - 登录尝试记录表**
-```sql
-CREATE TABLE login_attempts (
-    username character varying(100) NOT NULL,
-    count integer(32) DEFAULT 0 NOT NULL,
-    last_attempt timestamp with time zone DEFAULT now() NOT NULL,
-    PRIMARY KEY (username)
-);
-```
-
-#### 2. 学分管理相关表
-
-**`credits` - 学分申请表**
-```sql
-CREATE TABLE credits (
-    id integer(32) DEFAULT nextval('credits_id_seq'::regclass) NOT NULL,
-    user_id integer(32) NOT NULL,
-    type character varying(50) NOT NULL,
-    description text,
-    score numeric(4,2),
-    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    reject_reason character varying(255),
-    PRIMARY KEY (id)
-);
-```
-
-**`credits_proofs` - 学分证明材料表**
-```sql
-CREATE TABLE credits_proofs (
-    id integer(32) DEFAULT nextval('credits_proofs_id_seq'::regclass) NOT NULL,
-    credit_id integer(32),
-    file bytea NOT NULL,
-    filename character varying(255) NOT NULL,
-    mimetype character varying(128) NOT NULL,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-```
-
-#### 3. 公告管理表
-
-**`notices` - 公告表**
-```sql
-CREATE TABLE notices (
-    id integer(32) DEFAULT nextval('notices_id_seq'::regclass) NOT NULL,
-    title character varying(200) NOT NULL,
-    content text NOT NULL,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-```
-
-#### 4. 组织架构相关表
-
-**`grades` - 年级表**
-```sql
-CREATE TABLE grades (
-    id integer(32) DEFAULT nextval('grades_id_seq'::regclass) NOT NULL,
-    name character varying(32) NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (name)
-);
-```
-
-**`majors` - 专业表**
-```sql
-CREATE TABLE majors (
-    id integer(32) DEFAULT nextval('majors_id_seq'::regclass) NOT NULL,
-    name character varying(64) NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (name)
-);
-```
-
-**`classes` - 班级表**
-```sql
-CREATE TABLE classes (
-    id integer(32) DEFAULT nextval('classes_id_seq'::regclass) NOT NULL,
-    name character varying(32) NOT NULL,
-    grade_id integer(32),
-    major_id integer(32),
-    PRIMARY KEY (id),
-    UNIQUE (name),
-    UNIQUE (grade_id),
-    UNIQUE (major_id)
-);
-```
-
-### 索引优化
-
-系统已为以下字段创建了索引以优化查询性能：
-
-- **users表**: username, student_id, role, created_at
-- **credits表**: user_id, type, status, created_at  
-- **credits_proofs表**: credit_id, created_at
-- **notices表**: created_at
-- **classes表**: name, grade_id, major_id（复合唯一索引）
+> 详细字段请参考 migrations/database_schema.sql。
 
 ## 🔒 安全特性
 
@@ -471,6 +348,16 @@ MIT License
 - 问题反馈：[GitHub Issues](https://github.com/OldDream666/Quality-Credit-Management-System/issues)
 
 ## 📋 更新日志
+
+### v1.1.0 (2025-07-04)
+- 新增系统配置，角色、学分类型、状态等配置统一存储于 system_config，无单独 roles 表
+- classes 表唯一约束调整为 (name, grade_id, major_id) 组合唯一
+- 用户批量导入支持“有则更新，无则插入”，自动校验唯一性
+- 密码加密与安全性增强，所有密码均用 bcryptjs 加密
+- 审批历史中新增审批人显示
+- 文件/图片接口优化，img 可直接引用 proof-file 接口
+- 权限与鉴权机制完善，所有敏感API均需带有效token
+- 其它安全与体验优化
 
 ### v1.0.0 (2025-06-29)
 - 初始版本发布
