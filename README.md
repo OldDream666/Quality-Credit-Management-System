@@ -11,14 +11,15 @@
 - **文件管理**: 多文件上传，支持图片和PDF格式
 - **用户管理**: 管理员可管理用户，支持批量导入
 - **公告系统**: 系统公告发布和管理
+- **系统配置**：角色、学分类型支持动态配置
 - **数据统计**: 实时统计和可视化展示
 
 ### 🔐 权限系统
 - **管理员(admin)**: 全局管理权限
+- **学生(student)**: 申请学分，查看个人状态
 - **班长(monitor)**: 审批权限
 - **团支书(league_secretary)**: 审批权限  
 - **学习委员(study_committee)**: 审批权限
-- **学生(student)**: 申请学分，查看个人状态
 
 ### 🎨 技术特性
 - **现代化UI**: Tailwind CSS + 响应式设计
@@ -72,41 +73,7 @@ npm run dev
 6. **访问应用**
 打开浏览器访问 [http://localhost:3000](http://localhost:3000)
 
-## 📁 项目结构
 
-```
-student/
-├── migrations/           # 数据库迁移文件
-├── public/              # 静态资源
-├── src/
-│   ├── app/             # Next.js App Router
-│   │   ├── api/         # API路由
-│   │   ├── admin/       # 管理员页面
-│   │   ├── credits/     # 学分申请页面
-│   │   ├── dashboard/   # 仪表盘
-│   │   ├── login/       # 登录页面
-        └── profile/     # 个人信息页面
-│   ├── components/      # React组件
-│   │   ├── ui/          # 通用UI组件
-│   │   ├── Navbar.tsx
-        └── RichTextEditor   # 富文本编辑
-│   ├── hooks/           # 自定义Hook
-│   ├── lib/             # 工具库
-│   │   ├── api.ts       # API客户端
-│   │   ├── db.ts        # 数据库连接
-│   │   ├── jwt.ts       # JWT工具
-│   │   ├── auth.ts      # 权限控制
-│   │   ├── validation.ts # 输入验证
-│   │   ├── csrf.ts      # CSRF防护
-│   │   └── utils.ts     # 通用工具函数
-│   └── types/           # TypeScript类型定义
-├── middleware.ts        # Next.js中间件
-├── next.config.ts       # Next.js配置
-├── tailwind.config.js   # Tailwind CSS配置
-└── package.json         # 项目依赖
-```
-
-> 角色、学分类型、状态等配置均存储于 system_config 表，无单独 roles 表。
 
 ## 🔧 数据库表结构
 
@@ -243,61 +210,6 @@ RUN npm ci --only=production
 COPY . .
 ```
 
-## 📝 API 文档
-
-### 认证相关
-
-#### 登录
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "username": "string",
-  "password": "string"
-}
-```
-
-#### 获取用户信息
-```http
-GET /api/auth/me
-Authorization: Bearer <token>
-```
-
-### 学分相关
-
-#### 提交学分申请
-```http
-POST /api/credits
-Authorization: Bearer <token>
-Content-Type: multipart/form-data
-
-{
-  "type": "个人活动|个人比赛|个人证书|志愿活动",
-  "activityName": "string",
-  "proof": File[]
-}
-```
-
-#### 获取学分申请列表
-```http
-GET /api/credits
-Authorization: Bearer <token>
-```
-
-### 管理员相关
-
-#### 获取所有用户
-```http
-GET /api/users
-Authorization: Bearer <token>
-```
-
-#### 获取所有学分申请
-```http
-GET /api/credits/admin
-Authorization: Bearer <token>
-```
 
 ## 🐛 故障排除
 
@@ -350,13 +262,15 @@ MIT License
 ## 📋 更新日志
 
 ### v1.1.0 (2025-07-04)
-- 新增系统配置，角色、学分类型、状态等配置统一存储于 system_config，无单独 roles 表
+- 新增系统配置，角色、学分类型等配置统一存储于 system_config，无单独 roles 表
 - classes 表唯一约束调整为 (name, grade_id, major_id) 组合唯一
 - 用户批量导入支持“有则更新，无则插入”，自动校验唯一性
 - 密码加密与安全性增强，所有密码均用 bcryptjs 加密
 - 审批历史中新增审批人显示
+- 审批历史中新增导出数据功能
 - 文件/图片接口优化，img 可直接引用 proof-file 接口
 - 权限与鉴权机制完善，所有敏感API均需带有效token
+- 学分类型支持设置对应的班委角色进行审批
 - 其它安全与体验优化
 
 ### v1.0.0 (2025-06-29)

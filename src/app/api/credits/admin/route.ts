@@ -4,6 +4,7 @@ import { verifyJwt } from "@/lib/jwt";
 import { DatabaseConfigManager } from "@/lib/dbConfig";
 import { cookies } from "next/headers";
 import { requireAuth } from '@/lib/auth';
+import { UserRole } from '@/types';
 
 
 // 班委审批/查询所有学分申请
@@ -47,6 +48,10 @@ export const GET = requireAuth(async (req, user) => {
       ORDER BY credits.created_at DESC
     `, [userClass]);
     credits = result.rows;
+    // 新增：根据学分类型配置过滤审批权限
+    const allCreditTypes = await DatabaseConfigManager.getAllCreditTypes();
+    const approvableTypes = allCreditTypes.filter(ct => Array.isArray(ct.approverRoles) && ct.approverRoles.includes(currentUser.role as UserRole)).map(ct => ct.key);
+    credits = credits.filter(c => approvableTypes.includes(c.type));
   }
   const creditIds = credits.map(c => c.id);
   let proofsMap: Record<number, any[]> = {};
@@ -88,6 +93,16 @@ export const PATCH = requireAuth(async (req, user) => {
   const { id, status, reject_reason, score } = await req.json();
   if (!id || !['approved', 'rejected'].includes(status)) {
     return NextResponse.json({ error: "参数错误" }, { status: 400 });
+  }
+  // 新增：校验审批角色权限
+  const creditTypeRes = await pool.query('SELECT type FROM credits WHERE id = $1', [id]);
+  if (creditTypeRes.rowCount === 0) {
+    return NextResponse.json({ error: "审批单不存在" }, { status: 404 });
+  }
+  const creditType = creditTypeRes.rows[0].type;
+  const creditTypeConfig = await DatabaseConfigManager.getCreditTypeConfig(creditType);
+  if (!creditTypeConfig || !Array.isArray(creditTypeConfig.approverRoles) || !creditTypeConfig.approverRoles.includes(currentUser.role as UserRole)) {
+    return NextResponse.json({ error: "无权限审批该类型学分" }, { status: 403 });
   }
   const userClass = currentUser.class;
   if (!userClass) {

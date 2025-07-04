@@ -34,6 +34,7 @@ export interface CreditTypeConfig {
   defaultScore?: number; // 默认分数
   scoreCalculation?: 'fixed' | 'time_based' | 'manual'; // 分数计算方式
   scorePerHour?: number; // 按时长计算时，每小时对应的分数
+  approverRoles?: UserRole[]; // 新增：可审批该类型的角色
 }
 
 export interface StatusConfig {

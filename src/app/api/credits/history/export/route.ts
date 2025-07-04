@@ -86,6 +86,19 @@ export const GET = requireAuth(async (req, user) => {
       queryParams.push(currentUser.class);
       paramIndex++;
     }
+    // 班长不过滤类型，其他班委按类型过滤
+    if (currentUser.role !== 'admin' && currentUser.role !== 'monitor') {
+      const allCreditTypes = await DatabaseConfigManager.getAllCreditTypes();
+      const approvableTypes = allCreditTypes.filter(ct => Array.isArray(ct.approverRoles) && ct.approverRoles.includes(currentUser.role)).map(ct => ct.key);
+      if (approvableTypes.length > 0) {
+        whereConditions.push(`c.type = ANY($${paramIndex})`);
+        queryParams.push(approvableTypes);
+        paramIndex++;
+      } else {
+        // 没有权限类型，直接返回空
+        return NextResponse.json({ error: "无可导出的审批数据" }, { status: 403 });
+      }
+    }
 
     if (whereConditions.length > 0) {
       query += ` WHERE ${whereConditions.join(' AND ')}`;

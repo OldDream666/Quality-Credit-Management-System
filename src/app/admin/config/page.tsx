@@ -8,6 +8,7 @@ import {
   FieldConfig,
   PERMISSIONS_CONFIG,
 } from '@/config/system';
+import { UserRole } from '@/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
@@ -589,6 +590,7 @@ export default function SystemConfigPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
+                  {/* 分数相关表单优先 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       分数计算方式
@@ -605,45 +607,79 @@ export default function SystemConfigPage() {
                       <option value="fixed">固定分数</option>
                       <option value="time_based">按时长计算</option>
                     </select>
+                    {/* 分数相关表单 */}
+                    {editingCreditType.scoreCalculation === 'fixed' && (
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          默认分数
+                        </label>
+                        <Input
+                          type="number"
+                          value={editingCreditType.defaultScore || ''}
+                          onChange={(e) => setEditingCreditType({
+                            ...editingCreditType,
+                            defaultScore: Number(e.target.value) || 0
+                          })}
+                          placeholder="15"
+                        />
+                      </div>
+                    )}
+                    {editingCreditType.scoreCalculation === 'time_based' && (
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          每小时分数
+                        </label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={editingCreditType.scorePerHour || ''}
+                          onChange={(e) => setEditingCreditType({
+                            ...editingCreditType,
+                            scorePerHour: Number(e.target.value) || 0
+                          })}
+                          placeholder="6"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          最终分数 = 志愿时长 × 每小时分数
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  
-                  {editingCreditType.scoreCalculation === 'fixed' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        默认分数
-                      </label>
-                      <Input
-                        type="number"
-                        value={editingCreditType.defaultScore || ''}
-                        onChange={(e) => setEditingCreditType({
-                          ...editingCreditType, 
-                          defaultScore: Number(e.target.value) || 0
-                        })}
-                        placeholder="15"
-                      />
+                  {/* 审批角色复选框后置 */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      审批角色（可多选）
+                    </label>
+                    <div className="flex flex-col gap-1">
+                      {configData.roles
+                        .filter(role => role.key !== 'admin' && role.key !== 'student')
+                        .map(role => (
+                          <label key={role.key} className="inline-flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              value={role.key}
+                              checked={Array.isArray(editingCreditType.approverRoles) && editingCreditType.approverRoles.includes(role.key as UserRole)}
+                              onChange={e => {
+                                const checked = e.target.checked;
+                                const value = role.key;
+                                let next: UserRole[] = Array.isArray(editingCreditType.approverRoles) ? [...editingCreditType.approverRoles] : [];
+                                if (checked) {
+                                  if (!next.includes(value as UserRole)) next.push(value as UserRole);
+                                } else {
+                                  next = next.filter(k => k !== value);
+                                }
+                                setEditingCreditType({
+                                  ...editingCreditType,
+                                  approverRoles: next as UserRole[]
+                                });
+                              }}
+                            />
+                            {role.label}
+                          </label>
+                        ))}
                     </div>
-                  )}
-
-                  {editingCreditType.scoreCalculation === 'time_based' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        每小时分数
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        value={editingCreditType.scorePerHour || ''}
-                        onChange={(e) => setEditingCreditType({
-                          ...editingCreditType, 
-                          scorePerHour: Number(e.target.value) || 0
-                        })}
-                        placeholder="6"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        最终分数 = 志愿时长 × 每小时分数
-                      </p>
-                    </div>
-                  )}
+                    <p className="text-xs text-gray-500 mt-1">只有选中的角色才能审批该类型学分</p>
+                  </div>
                 </div>
 
                 <div>

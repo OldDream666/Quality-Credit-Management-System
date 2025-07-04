@@ -71,7 +71,7 @@ export default function CreditsHistoryPage() {
   useEffect(() => {
     if (!user || loading || fetched) return;
     setFetched(true);
-    fetch("/api/credits/admin?all=1")
+    fetch("/api/credits/history")
       .then(res => res.ok ? res.json() : { credits: [] })
       .then(data => {
         if (data.credits) {
