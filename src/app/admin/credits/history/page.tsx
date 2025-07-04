@@ -24,8 +24,7 @@ export default function CreditsHistoryPage() {
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-
+  const [pageSize, setPageSize] = useState(10);
   const [fetched, setFetched] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -328,7 +327,7 @@ export default function CreditsHistoryPage() {
                 </tbody>
               </table>
             </div>
-            {totalPages > 1 && (
+            {(
               <div className="flex items-center justify-between mt-6">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">每页显示：</span>

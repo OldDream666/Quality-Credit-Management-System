@@ -167,17 +167,18 @@ export default function AdminCreditsPage() {
           <div className="text-gray-400 text-lg mb-6">当前暂无审批</div>
         </div>
       ) : (
-        <ApprovalCard credit={pending} onApprove={handleApprove} loading={loading} creditTypesConfig={creditTypesConfig} />
+        <ApprovalCard credit={pending} onApprove={handleApprove} loading={loading} creditTypesConfig={creditTypesConfig} systemConfigs={systemConfigs} />
       )}
     </div>
   );
 }
 
-function ApprovalCard({ credit, onApprove, loading, creditTypesConfig }: { 
+function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemConfigs }: { 
   credit: any, 
   onApprove: (id: number, status: string, reject_reason?: string, score?: number) => void, 
   loading: boolean,
-  creditTypesConfig: Record<string, any>
+  creditTypesConfig: Record<string, any>,
+  systemConfigs: any
 }) {
   const statusMap: Record<string, string> = {
     approved: '已通过',
@@ -268,6 +269,10 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig }: {
   } = {};
   try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch {}
 
+  // 动态渲染类型特有字段
+  const typeConfig = creditTypesConfig[credit.type] || {};
+  const dynamicFields = Array.isArray(typeConfig.fields) ? typeConfig.fields : [];
+
   return (
     <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-4">
       <div className="flex flex-wrap gap-4">
@@ -276,31 +281,40 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig }: {
         <div><span className="font-bold">班级：</span>{credit.user_class}</div>
         <div><span className="font-bold">类型：</span>{credit.type}</div>
       </div>
-      {/* 新增：显示各类型详细信息 */}
-      {credit.type === '个人活动' && desc.activityName && <div><span className="font-bold">活动名称：</span>{desc.activityName}</div>}
-      {credit.type === '个人比赛' && desc.competitionName && <div><span className="font-bold">比赛名称：</span>{desc.competitionName}</div>}
-      {credit.type === '个人证书' && desc.certificateName && <div><span className="font-bold">证书名称：</span>{desc.certificateName}</div>}
-      {credit.type === '志愿活动' && (
-        <>
-          <div><span className="font-bold">活动名称：</span>{desc.volunteerName}</div>
-          <div><span className="font-bold">志愿时长：</span>{desc.volunteerHours} 小时</div>
-          {/* 显示分数计算 */}
-          {(() => {
-            const typeConfig = creditTypesConfig[credit.type];
-            const hours = Number(desc.volunteerHours) || 0;
-            if (typeConfig && typeConfig.scoreCalculation === 'time_based' && hours > 0) {
-              const scorePerHour = typeConfig.scorePerHour || 0;
-              const calculatedScore = ((hours * scorePerHour).toFixed(2));
-              return (
-                <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                  📊 按时长计算：{hours} 小时 × {scorePerHour} 分/小时 = {calculatedScore} 分
-                </div>
-              );
-            }
-            return null;
-          })()}
-        </>
+      {/* 动态渲染类型特有字段 */}
+      {dynamicFields.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {dynamicFields.map((field: any) => {
+            const fieldKey = typeof field === 'string' ? field : field.key;
+            const fieldLabel =
+              (systemConfigs?.availableFields?.find((f: any) => f.key === fieldKey)?.label)
+              || (typeof field === 'object' && field.label)
+              || fieldKey;
+            let value = (desc as Record<string, any>)[fieldKey];
+            // 证明材料特殊处理
+            if (fieldKey === 'proofFiles' || fieldKey === 'proofs') return null;
+            if (value === undefined || value === null || value === "") return null;
+            return (
+              <div key={fieldKey}><span className="font-bold">{fieldLabel}：</span>{value}</div>
+            );
+          })}
+        </div>
       )}
+      {/* 志愿活动分数计算说明（保留原有逻辑） */}
+      {credit.type === '志愿活动' && desc.volunteerHours && (() => {
+        const typeConfig = creditTypesConfig[credit.type];
+        const hours = Number(desc.volunteerHours) || 0;
+        if (typeConfig && typeConfig.scoreCalculation === 'time_based' && hours > 0) {
+          const scorePerHour = typeConfig.scorePerHour || 0;
+          const calculatedScore = ((hours * scorePerHour).toFixed(2));
+          return (
+            <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+              📊 按时长计算：{hours} 小时 × {scorePerHour} 分/小时 = {calculatedScore} 分
+            </div>
+          );
+        }
+        return null;
+      })()}
       <div>
         <span className="font-bold">证明材料：</span>
         <ProofList proofs={credit.proofs} />

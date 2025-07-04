@@ -10,7 +10,7 @@ import { UserRole, CreditType } from '@/types';
 export interface FieldConfig {
   key: string;
   label: string;
-  type?: 'text' | 'number' | 'date' | 'select';
+  type?: 'text' | 'number' | 'date';
   required?: boolean;
   description?: string;
 }
@@ -113,7 +113,7 @@ export const PERMISSIONS_CONFIG: Record<string, PermissionConfig> = {
 // 文件配置
 export const FILE_CONFIG = {
   // 允许的文件类型
-  ALLOWED_TYPES: [
+  ALLOWED_TYPES: process.env.ALLOWED_FILE_TYPES?.split(',') || [
     'image/jpeg',
     'image/jpg', 
     'image/png',
@@ -121,7 +121,7 @@ export const FILE_CONFIG = {
     'application/pdf'
   ],
   // 最大文件大小 (10MB)
-  MAX_SIZE: 10 * 1024 * 1024,
+  MAX_SIZE: process.env.MAX_FILE_SIZE || 10 * 1024 * 1024,
   // 最大文件数量
   MAX_COUNT: 6
 };
@@ -148,30 +148,8 @@ export const VALIDATION_CONFIG = {
   }
 };
 
-// 字段标签配置
-export const FIELD_LABELS: Record<string, string> = {
-  activityName: '活动名称',
-  competitionName: '比赛名称',
-  certificateName: '证书名称',
-  volunteerName: '志愿活动名称',
-  volunteerHours: '志愿时长',
-  organizationName: '组织机构',
-  eventDate: '活动日期',
-  duration: '持续时间',
-  location: '活动地点',
-  award: '获奖情况',
-  level: '活动级别',
-  score: '申请分数',
-  proofFiles: '证明材料',
-  remarks: '备注说明'
-};
 
 // ===== 工具函数 =====
-
-// 获取字段标签
-export function getFieldLabel(field: string): string {
-  return FIELD_LABELS[field] || field;
-}
 
 // 获取权限配置
 export function getPermissionConfig(permission: string): PermissionConfig | null {
@@ -226,5 +204,4 @@ export default {
   PERMISSIONS_CONFIG,
   FILE_CONFIG,
   VALIDATION_CONFIG,
-  FIELD_LABELS
 };

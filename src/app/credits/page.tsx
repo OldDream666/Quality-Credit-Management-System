@@ -2,7 +2,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from 'react-hot-toast';
-import { getFieldLabel } from '@/config/system';
 import type { FieldConfig } from '@/config/system';
 
 // 从配置系统获取类型选项（将通过API动态加载）
@@ -50,17 +49,14 @@ export default function CreditSubmitPage() {
     // 优先查 availableFields
     const found = availableFields.find(f => f.key === fieldKey);
     if (found && found.label) return found.label;
-    // 再查 creditType.fields
-    const config = creditTypesConfig[type];
-    if (config && Array.isArray(config.fields)) {
-      const found2 = config.fields.find((f: any) =>
-        typeof f === 'object' ? f.key === fieldKey : f === fieldKey
-      );
-      if (found2 && typeof found2 === 'object' && found2.label) {
-        return found2.label;
-      }
-    }
-    return getFieldLabel(fieldKey);
+    return '';
+  };
+
+  // 获取当前类型字段description
+  function getFieldDescription(fieldKey: string): string {
+    const found = availableFields.find(f => f.key === fieldKey);
+    if (found && found.description) return found.description;
+    return '';
   }
 
   useEffect(() => {
@@ -323,6 +319,7 @@ export default function CreditSubmitPage() {
         {type && getCurrentFields().map((fieldKey: string) => {
           const fieldLabel = getFieldLabelByKey(fieldKey);
           const fieldValue = fieldValues[fieldKey] || '';
+          const fieldDescription = getFieldDescription(fieldKey);
           
           // 证明材料上传字段
           if (fieldKey === 'proofFiles') {
@@ -451,7 +448,7 @@ export default function CreditSubmitPage() {
               key={fieldKey}
               className="input"
               type="text"
-              placeholder={fieldLabel}
+              placeholder={fieldLabel + (fieldDescription ? `（${fieldDescription}）` : '')}
               value={fieldValue}
               onChange={e => handleFieldChange(fieldKey, e.target.value)}
               required
