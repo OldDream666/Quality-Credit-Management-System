@@ -119,7 +119,7 @@ export const POST = requireRole(['admin'])(async (req, user) => {
           classId = ins.rows[0].id;
         }
       }
-      const initialPassword = u.username;
+      const initialPassword = String(u.username);
       const hashedPassword = await bcrypt.hash(initialPassword, 10);
       // 判断是否已存在
       const existRes = await pool.query('SELECT id FROM users WHERE student_id=$1', [u.student_id]);

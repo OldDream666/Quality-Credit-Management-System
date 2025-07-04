@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/AuthProvider";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
-  const [token, setToken] = useState("");
   const [oldPwd, setOldPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
@@ -64,6 +63,7 @@ export default function ProfilePage() {
     }
 
     setPwdLoading(true);
+    const token = localStorage.getItem('token');
     const res = await fetch("/api/auth/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

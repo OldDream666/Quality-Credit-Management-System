@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { verifyJwt } from "@/lib/jwt";
 import bcrypt from "bcryptjs";
 import { requireAuth } from '@/lib/auth';
 
