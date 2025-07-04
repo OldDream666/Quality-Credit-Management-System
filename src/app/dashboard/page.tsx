@@ -137,13 +137,13 @@ export default function Dashboard() {
           <h1 className="text-3xl font-extrabold text-primary mb-2">欢迎，管理员 {user.name || user.username}</h1>
           <div className="text-gray-500 text-base">账号：{user.username}</div>
         </div>
-        <div className="flex gap-4">
-          <button className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-green-300 text-lg" onClick={() => router.push("/admin/users")}>用户管理</button>
-          <button className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-yellow-300 text-lg" onClick={() => router.push("/admin/notices")}>公告管理</button>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg" onClick={() => router.push("/admin/config")}>系统配置</button>
+        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:gap-4">
+          <button className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-green-300 text-lg w-full sm:w-auto" onClick={() => router.push("/admin/users")}>用户管理</button>
+          <button className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-yellow-300 text-lg w-full sm:w-auto" onClick={() => router.push("/admin/notices")}>公告管理</button>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg w-full sm:w-auto" onClick={() => router.push("/admin/config")}>系统配置</button>
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         <div className="rounded-xl p-5 bg-gradient-to-br from-blue-100 to-blue-200 shadow text-center">
           <div className="text-4xl font-bold text-blue-700">{userCount}</div>
           <div className="text-gray-600 mt-1">系统用户</div>
@@ -160,7 +160,7 @@ export default function Dashboard() {
           <div className="text-gray-600 mt-1">审批单</div>
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         <div className="rounded-xl p-5 bg-gradient-to-br from-yellow-100 to-yellow-200 shadow text-center">
           <div className="text-4xl font-bold text-yellow-700">{pending}</div>
           <div className="text-gray-600 mt-1">待审批</div>
@@ -224,6 +224,17 @@ export default function Dashboard() {
       return config?.cardColor || 'from-gray-50 to-gray-100';
     }
     return 'from-gray-50 to-gray-100'; // 默认颜色
+  }
+  // 获取学分类型对应的分数字体颜色（动态获取）
+  function getTextColorForCreditType(type: string) {
+    if (systemConfigs.creditTypes && systemConfigs.creditTypes.length > 0) {
+      const config = systemConfigs.creditTypes.find((t: any) => t.key === type);
+      if (config?.color) {
+        const colorMatch = config.color.match(/text-[\w-]+/);
+        return colorMatch ? colorMatch[0] : 'text-blue-700';
+      }
+    }
+    return 'text-blue-700';
   }
 
   return (
@@ -309,7 +320,7 @@ export default function Dashboard() {
           {Object.entries(typeScoreMap).map(([key, typeData]) => (
             <div key={key} className={`rounded-lg p-3 text-center shadow bg-gradient-to-br ${typeData.color}`}>
               <div className="text-base text-gray-700 font-semibold mb-1">{typeData.label}</div>
-              <div className="text-xl font-bold text-gray-800">{typeData.score}</div>
+              <div className={`text-xl font-bold ${getTextColorForCreditType(key)}`}>{typeData.score}</div>
             </div>
           ))}
         </div>
@@ -359,55 +370,55 @@ export default function Dashboard() {
             })}
           </tbody>
         </table>
-        {/* 分页控制 */}
-        <div className="w-full flex flex-col gap-2 mt-4">
-          <div className="text-sm text-gray-600 text-center">
-            共 {userApprovals.length} 条记录
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-            <div className="flex items-center gap-1 justify-center">
-              <Button
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(1)}
-                className="min-w-[40px] whitespace-nowrap px-1"
-              >
-                首页
-              </Button>
-              <Button
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className="min-w-[40px] whitespace-nowrap px-1"
-              >
-                上一页
-              </Button>
-              <span className="mx-1 text-sm whitespace-nowrap">
-                <span className="text-blue-600 font-medium">{currentPage}</span>
-                <span className="mx-0.5">/</span>
-                <span>{totalPages || 1}</span>
-              </span>
-              <Button
-                size="sm"
-                disabled={currentPage === totalPages || totalPages === 0}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className="min-w-[40px] whitespace-nowrap px-1"
-              >
-                下一页
-              </Button>
-              <Button
-                size="sm"
-                disabled={currentPage === totalPages || totalPages === 0}
-                onClick={() => setCurrentPage(totalPages)}
-                className="min-w-[40px] whitespace-nowrap px-1"
-              >
-                末页
-              </Button>
-            </div>
+      </div>
+      {/* 分页控制条移到表格外部 */}
+      <div className="w-full flex flex-col gap-2 mt-4">
+        <div className="text-sm text-gray-600 text-center">
+          共 {userApprovals.length} 条记录
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+          <div className="flex items-center gap-1 justify-center">
+            <Button
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(1)}
+              className="min-w-[40px] whitespace-nowrap px-1"
+            >
+              首页
+            </Button>
+            <Button
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              className="min-w-[40px] whitespace-nowrap px-1"
+            >
+              上一页
+            </Button>
+            <span className="mx-1 text-sm whitespace-nowrap">
+              <span className="text-blue-600 font-medium">{currentPage}</span>
+              <span className="mx-0.5">/</span>
+              <span>{totalPages || 1}</span>
+            </span>
+            <Button
+              size="sm"
+              disabled={currentPage === totalPages || totalPages === 0}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              className="min-w-[40px] whitespace-nowrap px-1"
+            >
+              下一页
+            </Button>
+            <Button
+              size="sm"
+              disabled={currentPage === totalPages || totalPages === 0}
+              onClick={() => setCurrentPage(totalPages)}
+              className="min-w-[40px] whitespace-nowrap px-1"
+            >
+              末页
+            </Button>
           </div>
         </div>
-        <div style={{ height: 20 }} />
       </div>
+      <div style={{ height: 20 }} />
       {/* 详情弹窗 */}
       {detailOpen && detailItem && (() => {
         // 只取图片类型

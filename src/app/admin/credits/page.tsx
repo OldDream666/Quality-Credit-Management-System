@@ -223,7 +223,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig }: {
         try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch {}
         const hours = Number(desc.volunteerHours) || 0;
         const scorePerHour = typeConfig.scorePerHour || 0;
-        if (hours > 0) defaultScore = String(hours * scorePerHour);
+        if (hours > 0) defaultScore = String((hours * scorePerHour).toFixed(2));
       }
     } else {
       // 配置未加载，等待配置加载
@@ -290,7 +290,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig }: {
             const hours = Number(desc.volunteerHours) || 0;
             if (typeConfig && typeConfig.scoreCalculation === 'time_based' && hours > 0) {
               const scorePerHour = typeConfig.scorePerHour || 0;
-              const calculatedScore = hours * scorePerHour;
+              const calculatedScore = ((hours * scorePerHour).toFixed(2));
               return (
                 <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
                   📊 按时长计算：{hours} 小时 × {scorePerHour} 分/小时 = {calculatedScore} 分
@@ -349,7 +349,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig }: {
                   try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch {}
                   const hours = Number(desc.volunteerHours) || 0;
                   const scorePerHour = typeConfig.scorePerHour || 0;
-                  const calculatedScore = hours * scorePerHour;
+                  const calculatedScore = ((hours * scorePerHour).toFixed(2));
                   return (
                     <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
                       📊 建议分数：{hours} 小时 × {scorePerHour} 分/小时 = {calculatedScore} 分

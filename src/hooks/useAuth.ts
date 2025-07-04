@@ -36,8 +36,10 @@ export function useAuth(): UseAuthReturn {
         localStorage.removeItem('token');
         // 清除cookie
         document.cookie = 'token=; Max-Age=0; path=/;';
-        // 重定向到登录页
-        router.replace('/login');
+        // 只有在当前不在登录页时才重定向
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          router.replace('/login');
+        }
       }
     } catch (err: any) {
       setUser(null);
@@ -45,8 +47,10 @@ export function useAuth(): UseAuthReturn {
       // 清除cookie
       document.cookie = 'token=; Max-Age=0; path=/;';
       setError('认证失败，请重新登录');
-      // 重定向到登录页
-      router.replace('/login');
+      // 只有在当前不在登录页时才重定向
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        router.replace('/login');
+      }
     } finally {
       setLoading(false);
     }

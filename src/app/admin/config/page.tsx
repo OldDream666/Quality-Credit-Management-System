@@ -702,7 +702,6 @@ export default function SystemConfigPage() {
                             <option value="text">文本</option>
                             <option value="number">数字</option>
                             <option value="date">日期</option>
-                            <option value="select">下拉</option>
                           </select>
                           <label className="block text-sm mt-2">
                             <input
@@ -732,7 +731,7 @@ export default function SystemConfigPage() {
                               const fieldConfig: FieldConfig = {
                                 key: newField.key,
                                 label: newField.label,
-                                type: newField.type as 'text' | 'number' | 'date' | 'select',
+                                type: newField.type as 'text' | 'number' | 'date',
                                 required: newField.required,
                                 description: newField.description
                               };
@@ -888,7 +887,6 @@ export default function SystemConfigPage() {
                   <option value="text">文本</option>
                   <option value="number">数字</option>
                   <option value="date">日期</option>
-                  <option value="select">下拉</option>
                 </select>
                 <label className="block text-sm mt-2">
                   <input

@@ -19,15 +19,6 @@ function LoginPageInner() {
   
   const { user, loading, error, login } = useAuth();
 
-  // 登录成功后跳转
-  useEffect(() => {
-    if (!loading && user) {
-      if (window.location.pathname !== redirect) {
-        router.replace(redirect);
-      }
-    }
-  }, [user, loading, redirect, router]);
-
   useEffect(() => {
     if (error) toast.error(error);
   }, [error]);
@@ -40,20 +31,22 @@ function LoginPageInner() {
       const success = await login(username.trim(), password);
       setIsSubmitting(false);
       if (success) {
-        router.replace(redirect);
+        router.replace(redirect); // 登录成功立即跳转
       }
     } catch (err) {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (loading || isSubmitting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
   }
+
+  if (user) return null;
 
   return (
     <div className="login-bg min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4">

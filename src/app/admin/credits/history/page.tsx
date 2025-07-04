@@ -27,6 +27,46 @@ export default function CreditsHistoryPage() {
   const [pageSize, setPageSize] = useState(20);
 
   const [fetched, setFetched] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // 导出功能
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (typeFilter) params.append('type', typeFilter);
+      if (statusFilter) params.append('status', statusFilter);
+      if (dateFrom) params.append('dateFrom', dateFrom);
+      if (dateTo) params.append('dateTo', dateTo);
+      if (onlyMine) params.append('onlyMine', 'true');
+
+      const response = await fetch(`/api/credits/history/export?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `历史审批数据_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || '导出失败');
+      }
+    } catch (error) {
+      console.error('导出失败:', error);
+      alert('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     if (!user || loading || fetched) return;
@@ -158,6 +198,13 @@ export default function CreditsHistoryPage() {
               <input type="text" placeholder="搜索姓名或学号..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <button onClick={() => setShowFilters(!showFilters)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">{showFilters ? '隐藏筛选' : '显示筛选'}</button>
+            <button 
+              onClick={handleExport} 
+              disabled={exporting || filteredRecords.length === 0}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+            >
+              {exporting ? '导出中...' : '导出数据'}
+            </button>
             <label className="flex items-center gap-2 ml-4 cursor-pointer select-none">
               <input type="checkbox" checked={onlyMine} onChange={e => setOnlyMine(e.target.checked)} />
               <span className="text-blue-700 text-sm">只看我审批的</span>
@@ -208,6 +255,11 @@ export default function CreditsHistoryPage() {
               <span className="ml-2">
                 | 第 <span className="font-bold">{currentPage}</span> 页，共 <span className="font-bold">{totalPages}</span> 页
               </span>
+            )}
+            {filteredRecords.length > 0 && (
+              <div className="mt-2 text-xs text-green-600">
+                💡 点击"导出数据"可下载当前筛选条件下的Excel统计表和证明材料文件包。
+              </div>
             )}
           </div>
         </div>

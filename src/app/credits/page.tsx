@@ -394,7 +394,7 @@ export default function CreditSubmitPage() {
                 {hours > 0 && (
                   <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
                     <span className="text-blue-700">
-                      📊 预计得分：{hours.toFixed(1)} 小时 × {scorePerHour} 分/小时 = <strong>{calculatedScore.toFixed(1)} 分</strong>
+                      📊 预计得分：{hours.toFixed(2)} 小时 × {scorePerHour} 分/小时 = <strong>{calculatedScore.toFixed(2)} 分</strong>
                     </span>
                   </div>
                 )}
