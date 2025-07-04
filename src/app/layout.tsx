@@ -8,6 +8,11 @@ import { Toaster } from 'react-hot-toast';
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-cn">
+      <head>
+        <title>素质学分管理系统</title>
+        <meta name="description" content="学生素质学分管理系统" />
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body className="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
         <AuthProvider>
           <Navbar />
