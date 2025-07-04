@@ -32,8 +32,7 @@ CREATE TABLE IF NOT EXISTS classes (
     id SERIAL PRIMARY KEY, -- 班级ID，自增主键
     name character varying(32) NOT NULL, -- 班级名称
     grade_id integer, -- 年级ID
-    major_id integer, -- 专业ID
-    UNIQUE (name, grade_id, major_id)
+    major_id integer -- 专业ID
 );
 
 CREATE TABLE IF NOT EXISTS notices (
@@ -85,19 +84,19 @@ CREATE TABLE IF NOT EXISTS credits_proofs (
 
 -- 索引定义
 -- ------------------------------
-CREATE UNIQUE INDEX classes_name_grade_id_major_id_key ON public.classes USING btree (name, grade_id, major_id);
-CREATE INDEX idx_credits_created_at ON public.credits USING btree (created_at DESC);
-CREATE INDEX idx_credits_status ON public.credits USING btree (status);
-CREATE INDEX idx_credits_type ON public.credits USING btree (type);
-CREATE INDEX idx_credits_user_id ON public.credits USING btree (user_id);
-CREATE INDEX idx_credits_proofs_created_at ON public.credits_proofs USING btree (created_at DESC);
-CREATE INDEX idx_credits_proofs_credit_id ON public.credits_proofs USING btree (credit_id);
-CREATE INDEX idx_login_attempts_last_attempt ON public.login_attempts USING btree (last_attempt);
-CREATE INDEX idx_notices_created_at ON public.notices USING btree (created_at DESC);
-CREATE INDEX idx_users_created_at ON public.users USING btree (created_at DESC);
-CREATE INDEX idx_users_role ON public.users USING btree (role);
-CREATE INDEX idx_users_student_id ON public.users USING btree (student_id);
-CREATE INDEX idx_users_username ON public.users USING btree (username);
+CREATE UNIQUE INDEX IF NOT EXISTS classes_name_grade_id_major_id_key ON public.classes USING btree (name, grade_id, major_id);
+CREATE INDEX IF NOT EXISTS idx_credits_created_at ON public.credits USING btree (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_credits_status ON public.credits USING btree (status);
+CREATE INDEX IF NOT EXISTS idx_credits_type ON public.credits USING btree (type);
+CREATE INDEX IF NOT EXISTS idx_credits_user_id ON public.credits USING btree (user_id);
+CREATE INDEX IF NOT EXISTS idx_credits_proofs_created_at ON public.credits_proofs USING btree (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_credits_proofs_credit_id ON public.credits_proofs USING btree (credit_id);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_last_attempt ON public.login_attempts USING btree (last_attempt);
+CREATE INDEX IF NOT EXISTS idx_notices_created_at ON public.notices USING btree (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON public.users USING btree (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_role ON public.users USING btree (role);
+CREATE INDEX IF NOT EXISTS idx_users_student_id ON public.users USING btree (student_id);
+CREATE INDEX IF NOT EXISTS idx_users_username ON public.users USING btree (username);
 
 -- 序列定义
 -- ------------------------------
@@ -111,10 +110,16 @@ CREATE SEQUENCE IF NOT EXISTS users_id_seq AS integer START WITH 1 INCREMENT BY 
 
 -- 外键约束
 -- ------------------------------
-ALTER TABLE credits
-  ADD CONSTRAINT fk_credits_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
-ALTER TABLE credits_proofs
-  ADD CONSTRAINT fk_credits_proofs_credit FOREIGN KEY (credit_id) REFERENCES credits(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_credits_user') THEN
+    ALTER TABLE credits ADD CONSTRAINT fk_credits_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_credits_proofs_credit') THEN
+    ALTER TABLE credits_proofs ADD CONSTRAINT fk_credits_proofs_credit FOREIGN KEY (credit_id) REFERENCES credits(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- 触发器和自动更新时间
 -- ------------------------------
@@ -126,10 +131,15 @@ BEGIN
   RETURN NEW;
 END;
 $$ language 'plpgsql';
-CREATE TRIGGER update_system_config_timestamp
-  BEFORE UPDATE ON system_config
-  FOR EACH ROW
-  EXECUTE FUNCTION update_system_config_timestamp();
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_system_config_timestamp') THEN
+    CREATE TRIGGER update_system_config_timestamp
+      BEFORE UPDATE ON system_config
+      FOR EACH ROW
+      EXECUTE FUNCTION update_system_config_timestamp();
+  END IF;
+END $$;
 
 -- 初始化数据
 -- ------------------------------
