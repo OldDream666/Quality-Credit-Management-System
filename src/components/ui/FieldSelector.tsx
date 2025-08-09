@@ -21,6 +21,9 @@ export default function FieldSelector({
   renderFieldAction
 }: FieldSelectorProps) {
   const [expandedCategory, setExpandedCategory] = useState<string>('all');
+  // 拖拽排序状态
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleFieldChange = (field: string, checked: boolean) => {
     let newFields = [...selectedFields];
@@ -119,15 +122,61 @@ export default function FieldSelector({
       {/* 已选字段摘要 */}
       <div className="mt-4 p-3 bg-blue-50 rounded">
         <h5 className="text-xs font-medium text-blue-800 mb-1">已选字段摘要</h5>
+        <div className="text-[11px] text-blue-700 mb-2">按住条目拖拽以调整显示顺序</div>
         <div className="text-xs text-blue-600">
           {selectedFields.length > 0 ? (
-            <div className="space-y-1">
-              {selectedFields.map(fieldKey => {
+            <div className="space-y-1" role="list">
+              {selectedFields.map((fieldKey, idx) => {
                 const field = allFields.find(f => f.key === fieldKey);
+                const isDraggingOver = dragOverIndex === idx && dragIndex !== null && dragIndex !== idx;
+                const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+                  setDragIndex(idx);
+                  e.dataTransfer.effectAllowed = 'move';
+                  try { e.dataTransfer.setData('text/plain', String(idx)); } catch {}
+                };
+                const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                  if (dragOverIndex !== idx) setDragOverIndex(idx);
+                  e.dataTransfer.dropEffect = 'move';
+                };
+                const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                  const fromStr = (() => { try { return e.dataTransfer.getData('text/plain'); } catch { return ''; } })();
+                  const from = dragIndex !== null ? dragIndex : (fromStr ? Number(fromStr) : null);
+                  const to = idx;
+                  if (from === null || isNaN(from) || from === to) {
+                    setDragIndex(null);
+                    setDragOverIndex(null);
+                    return;
+                  }
+                  const next = [...selectedFields];
+                  const [item] = next.splice(from, 1);
+                  next.splice(to, 0, item);
+                  onChange(next);
+                  setDragIndex(null);
+                  setDragOverIndex(null);
+                };
+                const handleDragEnd = () => {
+                  setDragIndex(null);
+                  setDragOverIndex(null);
+                };
                 return (
-                  <div key={fieldKey} className="flex justify-between">
-                    <span>{field?.label || fieldKey}</span>
-                    <span className="font-mono text-blue-400">{fieldKey}</span>
+                  <div
+                    key={fieldKey}
+                    role="listitem"
+                    draggable
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onDragEnd={handleDragEnd}
+                    className={`flex items-center justify-between gap-2 bg-white rounded border px-2 py-1 cursor-grab ${isDraggingOver ? 'ring-2 ring-blue-400' : 'border-blue-200'}`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-gray-400 select-none" aria-hidden>⋮⋮</span>
+                      <span className="truncate">{field?.label || fieldKey}</span>
+                      <span className="font-mono text-blue-400 whitespace-nowrap">{fieldKey}</span>
+                    </div>
+                    <span className="text-[10px] text-gray-400 select-none">{idx + 1}</span>
                   </div>
                 );
               })}

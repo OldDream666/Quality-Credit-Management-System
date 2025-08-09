@@ -52,6 +52,17 @@ export default function CreditSubmitPage() {
     return '';
   };
 
+  // 新增：获取字段类型
+  function getFieldType(fieldKey: string): FieldConfig['type'] | undefined {
+    return availableFields.find(f => f.key === fieldKey)?.type;
+  }
+
+  // 新增：获取字段是否必填（以配置为准，未配置则不必填）
+  function isFieldRequired(fieldKey: string): boolean {
+    const cfg = availableFields.find(f => f.key === fieldKey);
+    return !!cfg?.required;
+  }
+
   // 获取当前类型字段description
   function getFieldDescription(fieldKey: string): string {
     const found = availableFields.find(f => f.key === fieldKey);
@@ -182,10 +193,11 @@ export default function CreditSubmitPage() {
 
     // 验证必填字段
     const currentFields = getCurrentFields();
-    const requiredFields = currentFields.filter((field: string) => field !== 'remarks'); // 备注不是必填
+    const requiredFields = currentFields.filter((field: string) => isFieldRequired(field));
     
     for (const fieldKey of requiredFields) {
-      if (fieldKey === 'proofFiles') {
+      const fieldType = getFieldType(fieldKey);
+      if (fieldType === 'file' || fieldKey === 'proofFiles') {
         // 检查文件上传
         if (files.length === 0) {
           toast.error("请上传证明文件");
@@ -320,9 +332,11 @@ export default function CreditSubmitPage() {
           const fieldLabel = getFieldLabelByKey(fieldKey);
           const fieldValue = fieldValues[fieldKey] || '';
           const fieldDescription = getFieldDescription(fieldKey);
+          const fieldType = getFieldType(fieldKey);
+          const required = isFieldRequired(fieldKey);
           
-          // 证明材料上传字段
-          if (fieldKey === 'proofFiles') {
+          // 证明材料上传字段，按类型
+          if (fieldType === 'file') {
             return (
               <div key={fieldKey}>
                 {/* 自定义文件上传控件 */}
@@ -346,7 +360,7 @@ export default function CreditSubmitPage() {
                     <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="text-blue-400 mb-1">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
                     </svg>
-                    <span className="text-blue-700 font-medium">点击或拖拽文件到此处上传</span>
+                    <span className="text-blue-700 font-medium">点击或拖拽文件到此处上传{required ? '（必填）' : ''}</span>
                     <span className="text-gray-400 text-xs mt-1">支持图片、PDF，最多6个文件</span>
                   </div>
                 </div>
@@ -386,7 +400,7 @@ export default function CreditSubmitPage() {
                   placeholder={`${fieldLabel}（小时）`}
                   value={fieldValue}
                   onChange={e => handleFieldChange(fieldKey, e.target.value)}
-                  required
+                  required={required}
                 />
                 {hours > 0 && (
                   <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
@@ -408,7 +422,7 @@ export default function CreditSubmitPage() {
                 placeholder={fieldLabel}
                 value={fieldValue}
                 onChange={e => handleFieldChange(fieldKey, e.target.value)}
-                required
+                required={required}
               />
             );
           }
@@ -424,7 +438,7 @@ export default function CreditSubmitPage() {
                 placeholder={`${fieldLabel}（分）`}
                 value={fieldValue}
                 onChange={e => handleFieldChange(fieldKey, e.target.value)}
-                required
+                required={required}
               />
             );
           }
@@ -451,7 +465,7 @@ export default function CreditSubmitPage() {
               placeholder={fieldLabel + (fieldDescription ? `（${fieldDescription}）` : '')}
               value={fieldValue}
               onChange={e => handleFieldChange(fieldKey, e.target.value)}
-              required
+              required={required}
             />
           );
         })}
