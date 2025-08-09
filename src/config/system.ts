@@ -10,7 +10,7 @@ import { UserRole, CreditType } from '@/types';
 export interface FieldConfig {
   key: string;
   label: string;
-  type?: 'text' | 'number' | 'date';
+  type?: 'text' | 'number' | 'date' | 'file';
   required?: boolean;
   description?: string;
 }

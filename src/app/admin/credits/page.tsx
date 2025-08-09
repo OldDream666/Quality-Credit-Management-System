@@ -290,9 +290,10 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
               (systemConfigs?.availableFields?.find((f: any) => f.key === fieldKey)?.label)
               || (typeof field === 'object' && field.label)
               || fieldKey;
+            const fieldType = systemConfigs?.availableFields?.find((f: any) => f.key === fieldKey)?.type;
             let value = (desc as Record<string, any>)[fieldKey];
-            // 证明材料特殊处理
-            if (fieldKey === 'proofFiles' || fieldKey === 'proofs') return null;
+            // 文件类型字段或旧 key 跳过展示
+            if (fieldType === 'file' || fieldKey === 'proofFiles' || fieldKey === 'proofs') return null;
             if (value === undefined || value === null || value === "") return null;
             return (
               <div key={fieldKey}><span className="font-bold">{fieldLabel}：</span>{value}</div>

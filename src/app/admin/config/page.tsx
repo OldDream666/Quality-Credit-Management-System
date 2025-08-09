@@ -405,86 +405,88 @@ export default function SystemConfigPage() {
         {/* 编辑角色弹窗 */}
         {editingRole && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h3 className="text-lg font-semibold mb-4">
-                {isAddingRole ? '添加角色' : '编辑角色'}
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    角色键 (key)
-                  </label>
-                  <Input
-                    value={editingRole.key}
-                    onChange={(e) => setEditingRole({...editingRole, key: e.target.value as any})}
-                    placeholder="admin, student, monitor..."
-                    disabled={!isAddingRole}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    角色名称
-                  </label>
-                  <Input
-                    value={editingRole.label}
-                    onChange={(e) => setEditingRole({...editingRole, label: e.target.value})}
-                    placeholder="管理员, 学生, 班长..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    描述
-                  </label>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    rows={3}
-                    value={editingRole.description}
-                    onChange={(e) => setEditingRole({...editingRole, description: e.target.value})}
-                    placeholder="角色功能描述..."
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <ColorPicker
-                    label="标签颜色"
-                    value={editingRole.color}
-                    onChange={(color) => setEditingRole({...editingRole, color})}
-                    type="tag"
-                  />
-                  <ColorPicker
-                    label="卡片颜色"
-                    value={editingRole.cardColor}
-                    onChange={(cardColor) => setEditingRole({...editingRole, cardColor})}
-                    type="gradient"
-                  />
-                </div>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden">
+              <div className="p-6 max-h-[90vh] overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-4">
+                  {isAddingRole ? '添加角色' : '编辑角色'}
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      角色键 (key)
+                    </label>
+                    <Input
+                      value={editingRole.key}
+                      onChange={(e) => setEditingRole({...editingRole, key: e.target.value as any})}
+                      placeholder="admin, student, monitor..."
+                      disabled={!isAddingRole}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      角色名称
+                    </label>
+                    <Input
+                      value={editingRole.label}
+                      onChange={(e) => setEditingRole({...editingRole, label: e.target.value})}
+                      placeholder="管理员, 学生, 班长..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      描述
+                    </label>
+                    <textarea
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      rows={3}
+                      value={editingRole.description}
+                      onChange={(e) => setEditingRole({...editingRole, description: e.target.value})}
+                      placeholder="角色功能描述..."
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <ColorPicker
+                      label="标签颜色"
+                      value={editingRole.color}
+                      onChange={(color) => setEditingRole({...editingRole, color})}
+                      type="tag"
+                    />
+                    <ColorPicker
+                      label="卡片颜色"
+                      value={editingRole.cardColor}
+                      onChange={(cardColor) => setEditingRole({...editingRole, cardColor})}
+                      type="gradient"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    权限配置
-                  </label>
-                  <PermissionSelector
-                    selectedPermissions={editingRole.permissions}
-                    onChange={(permissions) => setEditingRole({
-                      ...editingRole,
-                      permissions
-                    })}
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      权限配置
+                    </label>
+                    <PermissionSelector
+                      selectedPermissions={editingRole.permissions}
+                      onChange={(permissions) => setEditingRole({
+                        ...editingRole,
+                        permissions
+                      })}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setEditingRole(null);
-                    setIsAddingRole(false);
-                  }}
-                >
-                  取消
-                </Button>
-                <Button onClick={() => saveConfig('role', editingRole)}>
-                  保存
-                </Button>
+                <div className="flex justify-end gap-3 mt-6">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setEditingRole(null);
+                      setIsAddingRole(false);
+                    }}
+                  >
+                    取消
+                  </Button>
+                  <Button onClick={() => saveConfig('role', editingRole)}>
+                    保存
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -532,330 +534,333 @@ export default function SystemConfigPage() {
         {/* 编辑学分类型弹窗 */}
         {editingCreditType && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <h3 className="text-lg font-semibold mb-4">
-                {isAddingCreditType ? '添加学分类型' : '编辑学分类型'}
-              </h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      类型键 (key)
-                    </label>
-                    <Input
-                      value={editingCreditType.key}
-                      onChange={(e) => setEditingCreditType({...editingCreditType, key: e.target.value as any})}
-                      placeholder="个人活动, 个人比赛..."
-                      disabled={!isAddingCreditType}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      类型名称
-                    </label>
-                    <Input
-                      value={editingCreditType.label}
-                      onChange={(e) => setEditingCreditType({...editingCreditType, label: e.target.value})}
-                      placeholder="个人活动, 个人比赛..."
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    描述
-                  </label>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    rows={3}
-                    value={editingCreditType.description}
-                    onChange={(e) => setEditingCreditType({...editingCreditType, description: e.target.value})}
-                    placeholder="学分类型的详细描述..."
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <ColorPicker
-                    label="标签颜色"
-                    value={editingCreditType.color}
-                    onChange={(color) => setEditingCreditType({...editingCreditType, color})}
-                    type="tag"
-                  />
-                  <ColorPicker
-                    label="卡片颜色"
-                    value={editingCreditType.cardColor}
-                    onChange={(cardColor) => setEditingCreditType({...editingCreditType, cardColor})}
-                    type="gradient"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* 分数相关表单优先 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      分数计算方式
-                    </label>
-                    <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      value={editingCreditType.scoreCalculation}
-                      onChange={(e) => setEditingCreditType({
-                        ...editingCreditType, 
-                        scoreCalculation: e.target.value as any
-                      })}
-                    >
-                      <option value="manual">手动输入</option>
-                      <option value="fixed">固定分数</option>
-                      <option value="time_based">按时长计算</option>
-                    </select>
-                    {/* 分数相关表单 */}
-                    {editingCreditType.scoreCalculation === 'fixed' && (
-                      <div className="mt-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          默认分数
-                        </label>
-                        <Input
-                          type="number"
-                          value={editingCreditType.defaultScore || ''}
-                          onChange={(e) => setEditingCreditType({
-                            ...editingCreditType,
-                            defaultScore: Number(e.target.value) || 0
-                          })}
-                          placeholder="15"
-                        />
-                      </div>
-                    )}
-                    {editingCreditType.scoreCalculation === 'time_based' && (
-                      <div className="mt-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          每小时分数
-                        </label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={editingCreditType.scorePerHour || ''}
-                          onChange={(e) => setEditingCreditType({
-                            ...editingCreditType,
-                            scorePerHour: Number(e.target.value) || 0
-                          })}
-                          placeholder="6"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          最终分数 = 志愿时长 × 每小时分数
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {/* 审批角色复选框后置 */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      审批角色（可多选）
-                    </label>
-                    <div className="flex flex-col gap-1">
-                      {configData.roles
-                        .filter(role => role.key !== 'admin' && role.key !== 'student')
-                        .map(role => (
-                          <label key={role.key} className="inline-flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              value={role.key}
-                              checked={Array.isArray(editingCreditType.approverRoles) && editingCreditType.approverRoles.includes(role.key as UserRole)}
-                              onChange={e => {
-                                const checked = e.target.checked;
-                                const value = role.key;
-                                let next: UserRole[] = Array.isArray(editingCreditType.approverRoles) ? [...editingCreditType.approverRoles] : [];
-                                if (checked) {
-                                  if (!next.includes(value as UserRole)) next.push(value as UserRole);
-                                } else {
-                                  next = next.filter(k => k !== value);
-                                }
-                                setEditingCreditType({
-                                  ...editingCreditType,
-                                  approverRoles: next as UserRole[]
-                                });
-                              }}
-                            />
-                            {role.label}
-                          </label>
-                        ))}
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
+              <div className="p-6 max-h-[90vh] overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-4">
+                  {isAddingCreditType ? '添加学分类型' : '编辑学分类型'}
+                </h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        类型键 (key)
+                      </label>
+                      <Input
+                        value={editingCreditType.key}
+                        onChange={(e) => setEditingCreditType({...editingCreditType, key: e.target.value as any})}
+                        placeholder="个人活动, 个人比赛..."
+                        disabled={!isAddingCreditType}
+                      />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">只有选中的角色才能审批该类型学分</p>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        类型名称
+                      </label>
+                      <Input
+                        value={editingCreditType.label}
+                        onChange={(e) => setEditingCreditType({...editingCreditType, label: e.target.value})}
+                        placeholder="个人活动, 个人比赛..."
+                      />
+                    </div>
                   </div>
-                </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      描述
+                    </label>
+                    <textarea
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      rows={3}
+                      value={editingCreditType.description}
+                      onChange={(e) => setEditingCreditType({...editingCreditType, description: e.target.value})}
+                      placeholder="学分类型的详细描述..."
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <ColorPicker
+                      label="标签颜色"
+                      value={editingCreditType.color}
+                      onChange={(color) => setEditingCreditType({...editingCreditType, color})}
+                      type="tag"
+                    />
+                    <ColorPicker
+                      label="卡片颜色"
+                      value={editingCreditType.cardColor}
+                      onChange={(cardColor) => setEditingCreditType({...editingCreditType, cardColor})}
+                      type="gradient"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    表单字段配置
-                  </label>
-                  <FieldSelector
-                    selectedFields={editingCreditType.fields.map(f => typeof f === 'string' ? f : f.key)}
-                    onChange={(fields) => setEditingCreditType({
-                      ...editingCreditType,
-                      fields
-                    })}
-                    allFields={allFields}
-                    renderFieldAction={(field) => (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="ml-2"
-                        onClick={() => {
-                          setEditingField(field as FieldConfig);
-                          setEditFieldModalOpen(true);
-                        }}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* 分数相关表单优先 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        分数计算方式
+                      </label>
+                      <select
+                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                        value={editingCreditType.scoreCalculation}
+                        onChange={(e) => setEditingCreditType({
+                          ...editingCreditType, 
+                          scoreCalculation: e.target.value as any
+                        })}
                       >
-                        编辑
-                      </Button>
-                    )}
-                  />
-                  <Button
-                    className="mt-2"
-                    onClick={() => setCustomFieldModalOpen(true)}
-                  >
-                    添加自定义字段
-                  </Button>
-                  {customFieldModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-                        <h4 className="text-lg font-semibold mb-4">添加自定义字段</h4>
-                        <div className="space-y-3">
-                          <Input
-                            label="字段英文key"
-                            value={newField.key}
-                            onChange={e => setNewField(f => ({ ...f, key: e.target.value }))}
-                            placeholder="如 reason"
-                          />
-                          <Input
-                            label="字段名称"
-                            value={newField.label}
-                            onChange={e => setNewField(f => ({ ...f, label: e.target.value }))}
-                            placeholder="如 请假原因"
-                          />
-                          <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2"
-                            value={newField.type}
-                            onChange={e => setNewField(f => ({ ...f, type: e.target.value }))}
-                          >
-                            <option value="text">文本</option>
-                            <option value="number">数字</option>
-                            <option value="date">日期</option>
-                          </select>
-                          <label className="block text-sm mt-2">
-                            <input
-                              type="checkbox"
-                              checked={newField.required}
-                              onChange={e => setNewField(f => ({ ...f, required: e.target.checked }))}
-                              className="mr-2"
-                            />
-                            必填
+                        <option value="manual">手动输入</option>
+                        <option value="fixed">固定分数</option>
+                        <option value="time_based">按时长计算</option>
+                      </select>
+                      {/* 分数相关表单 */}
+                      {editingCreditType.scoreCalculation === 'fixed' && (
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            默认分数
                           </label>
                           <Input
-                            label="描述"
-                            value={newField.description}
-                            onChange={e => setNewField(f => ({ ...f, description: e.target.value }))}
-                            placeholder="字段说明"
+                            type="number"
+                            value={editingCreditType.defaultScore || ''}
+                            onChange={(e) => setEditingCreditType({
+                              ...editingCreditType,
+                              defaultScore: Number(e.target.value) || 0
+                            })}
+                            placeholder="15"
                           />
                         </div>
-                        <div className="flex justify-end gap-3 mt-6">
-                          <Button
-                            variant="secondary"
-                            onClick={() => setCustomFieldModalOpen(false)}
-                          >
-                            取消
-                          </Button>
-                          <Button
-                            onClick={async () => {
-                              const fieldConfig: FieldConfig = {
-                                key: newField.key,
-                                label: newField.label,
-                                type: newField.type as 'text' | 'number' | 'date',
-                                required: newField.required,
-                                description: newField.description
-                              };
-                              const updatedFields = [...allFields, fieldConfig];
-                              setAllFields(updatedFields);
-                              // 新增：保存到后端
-                              try {
-                                const res = await fetch("/api/admin/config", {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${token}`
-                                  },
-                                  body: JSON.stringify({
-                                    type: "availableFields",
-                                    config: updatedFields
-                                  })
-                                });
-                                if (res.ok) {
-                                  toast.success("自定义字段已保存");
-                                  await loadConfigs(token); // 刷新配置
-                                } else {
+                      )}
+                      {editingCreditType.scoreCalculation === 'time_based' && (
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            每小时分数
+                          </label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={editingCreditType.scorePerHour || ''}
+                            onChange={(e) => setEditingCreditType({
+                              ...editingCreditType,
+                              scorePerHour: Number(e.target.value) || 0
+                            })}
+                            placeholder="6"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            最终分数 = 志愿时长 × 每小时分数
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {/* 审批角色复选框后置 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        审批角色（可多选）
+                      </label>
+                      <div className="flex flex-col gap-1">
+                        {configData.roles
+                          .filter(role => role.key !== 'admin' && role.key !== 'student')
+                          .map(role => (
+                            <label key={role.key} className="inline-flex items-center gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                value={role.key}
+                                checked={Array.isArray(editingCreditType.approverRoles) && editingCreditType.approverRoles.includes(role.key as UserRole)}
+                                onChange={e => {
+                                  const checked = e.target.checked;
+                                  const value = role.key;
+                                  let next: UserRole[] = Array.isArray(editingCreditType.approverRoles) ? [...editingCreditType.approverRoles] : [];
+                                  if (checked) {
+                                    if (!next.includes(value as UserRole)) next.push(value as UserRole);
+                                  } else {
+                                    next = next.filter(k => k !== value);
+                                  }
+                                  setEditingCreditType({
+                                    ...editingCreditType,
+                                    approverRoles: next as UserRole[]
+                                  });
+                                }}
+                              />
+                              {role.label}
+                            </label>
+                          ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">只有选中的角色才能审批该类型学分</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      表单字段配置
+                    </label>
+                    <FieldSelector
+                      selectedFields={editingCreditType.fields.map(f => typeof f === 'string' ? f : f.key)}
+                      onChange={(fields) => setEditingCreditType({
+                        ...editingCreditType,
+                        fields
+                      })}
+                      allFields={allFields}
+                      renderFieldAction={(field) => (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="ml-2"
+                          onClick={() => {
+                            setEditingField(field as FieldConfig);
+                            setEditFieldModalOpen(true);
+                          }}
+                        >
+                          编辑
+                        </Button>
+                      )}
+                    />
+                    <Button
+                      className="mt-2"
+                      onClick={() => setCustomFieldModalOpen(true)}
+                    >
+                      添加自定义字段
+                    </Button>
+                    {customFieldModalOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                          <h4 className="text-lg font-semibold mb-4">添加自定义字段</h4>
+                          <div className="space-y-3">
+                            <Input
+                              label="字段英文key"
+                              value={newField.key}
+                              onChange={e => setNewField(f => ({ ...f, key: e.target.value }))}
+                              placeholder="如 reason"
+                            />
+                            <Input
+                              label="字段名称"
+                              value={newField.label}
+                              onChange={e => setNewField(f => ({ ...f, label: e.target.value }))}
+                              placeholder="如 请假原因"
+                            />
+                            <select
+                              className="w-full border border-gray-300 rounded-md px-3 py-2"
+                              value={newField.type}
+                              onChange={e => setNewField(f => ({ ...f, type: e.target.value }))}
+                            >
+                              <option value="text">文本</option>
+                              <option value="number">数字</option>
+                              <option value="date">日期</option>
+                              <option value="file">文件</option>
+                            </select>
+                            <label className="block text-sm mt-2">
+                              <input
+                                type="checkbox"
+                                checked={newField.required}
+                                onChange={e => setNewField(f => ({ ...f, required: e.target.checked }))}
+                                className="mr-2"
+                              />
+                              必填
+                            </label>
+                            <Input
+                              label="描述"
+                              value={newField.description}
+                              onChange={e => setNewField(f => ({ ...f, description: e.target.value }))}
+                              placeholder="字段说明"
+                            />
+                          </div>
+                          <div className="flex justify-end gap-3 mt-6">
+                            <Button
+                              variant="secondary"
+                              onClick={() => setCustomFieldModalOpen(false)}
+                            >
+                              取消
+                            </Button>
+                            <Button
+                              onClick={async () => {
+                                const fieldConfig: FieldConfig = {
+                                  key: newField.key,
+                                  label: newField.label,
+                                  type: newField.type as 'text' | 'number' | 'date' | 'file',
+                                  required: newField.required,
+                                  description: newField.description
+                                };
+                                const updatedFields = [...allFields, fieldConfig];
+                                setAllFields(updatedFields);
+                                // 新增：保存到后端
+                                try {
+                                  const res = await fetch("/api/admin/config", {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({
+                                      type: "availableFields",
+                                      config: updatedFields
+                                    })
+                                  });
+                                  if (res.ok) {
+                                    toast.success("自定义字段已保存");
+                                    await loadConfigs(token); // 刷新配置
+                                  } else {
+                                    toast.error("保存自定义字段失败");
+                                  }
+                                } catch {
                                   toast.error("保存自定义字段失败");
                                 }
-                              } catch {
-                                toast.error("保存自定义字段失败");
-                              }
-                              setCustomFieldModalOpen(false);
-                              setNewField({ key: '', label: '', type: 'text', required: false, description: '' });
-                            }}
-                          >
-                            添加
-                          </Button>
+                                setCustomFieldModalOpen(false);
+                                setNewField({ key: '', label: '', type: 'text', required: false, description: '' });
+                              }}
+                            >
+                              添加
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* 预览区域 */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">预览效果</h4>
-                  <div className="bg-white p-4 rounded border">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className={`inline-block px-2 py-0.5 rounded text-xs sm:text-sm font-medium whitespace-nowrap ${editingCreditType.color}`}>
-                        {editingCreditType.label || '学分类型'}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 mb-3 text-sm">
-                      {editingCreditType.description || '学分类型描述...'}
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
-                      <div>
-                        <strong>表单字段：</strong>
-                        {editingCreditType.fields.length > 0 ? (
-                          editingCreditType.fields.map(field => {
-                            let fieldObj = typeof field === 'string'
-                              ? allFields.find(f => f.key === field) || { key: field, label: field }
-                              : field;
-                            return fieldObj.label;
-                          }).join(', ')
-                        ) : (
-                          '无字段'
-                        )}
+                  {/* 预览区域 */}
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">预览效果</h4>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs sm:text-sm font-medium whitespace-nowrap ${editingCreditType.color}`}>
+                          {editingCreditType.label || '学分类型'}
+                        </span>
                       </div>
-                      <div className="whitespace-nowrap text-xs sm:text-sm">
-                        <strong>分数计算：</strong>
-                        {editingCreditType.scoreCalculation === 'fixed' && `固定分数 (${editingCreditType.defaultScore || 0}分)`}
-                        {editingCreditType.scoreCalculation === 'time_based' && `按时长计算 (${editingCreditType.scorePerHour || 0}分/小时)`}
-                        {editingCreditType.scoreCalculation === 'manual' && '手动输入'}
+                      <p className="text-gray-600 mb-3 text-sm">
+                        {editingCreditType.description || '学分类型描述...'}
+                      </p>
+                      <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
+                        <div>
+                          <strong>表单字段：</strong>
+                          {editingCreditType.fields.length > 0 ? (
+                            editingCreditType.fields.map(field => {
+                              let fieldObj = typeof field === 'string'
+                                ? allFields.find(f => f.key === field) || { key: field, label: field }
+                                : field;
+                              return fieldObj.label;
+                            }).join(', ')
+                          ) : (
+                            '无字段'
+                          )}
+                        </div>
+                        <div className="whitespace-nowrap text-xs sm:text-sm">
+                          <strong>分数计算：</strong>
+                          {editingCreditType.scoreCalculation === 'fixed' && `固定分数 (${editingCreditType.defaultScore || 0}分)`}
+                          {editingCreditType.scoreCalculation === 'time_based' && `按时长计算 (${editingCreditType.scorePerHour || 0}分/小时)`}
+                          {editingCreditType.scoreCalculation === 'manual' && '手动输入'}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setEditingCreditType(null);
-                    setIsAddingCreditType(false);
-                  }}
-                >
-                  取消
-                </Button>
-                <Button onClick={() => saveConfig('creditType', editingCreditType)}>
-                  保存
-                </Button>
+                <div className="flex justify-end gap-3 mt-6">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setEditingCreditType(null);
+                      setIsAddingCreditType(false);
+                    }}
+                  >
+                    取消
+                  </Button>
+                  <Button onClick={() => saveConfig('creditType', editingCreditType)}>
+                    保存
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -923,6 +928,7 @@ export default function SystemConfigPage() {
                   <option value="text">文本</option>
                   <option value="number">数字</option>
                   <option value="date">日期</option>
+                  <option value="file">文件</option>
                 </select>
                 <label className="block text-sm mt-2">
                   <input
