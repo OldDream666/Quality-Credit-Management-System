@@ -25,40 +25,106 @@ body {
 }
 
 /* 登录页样式 */
-.login-bg {@apply min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4;}
-.login-card {@apply w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-100 p-8;}
-.login-title {@apply text-3xl font-bold text-gray-900 mb-2 text-center;}
-.login-subtitle {@apply text-gray-600 text-center mb-8;}
-.login-form {@apply space-y-6;}
-.login-input {@apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed;}
-.login-error {@apply text-red-600 text-sm bg-red-50 p-3 rounded-md;}
-.login-btn {@apply w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow transition font-semibold text-lg;}
-.login-footer {@apply mt-6 text-center text-sm text-gray-500;}
+.login-bg {
+  @apply min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4;
+}
+
+.login-card {
+  @apply w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-100 p-8;
+}
+
+.login-title {
+  @apply text-3xl font-bold text-gray-900 mb-2 text-center;
+}
+
+.login-subtitle {
+  @apply text-gray-600 text-center mb-8;
+}
+
+.login-form {
+  @apply space-y-6;
+}
+
+.login-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed;
+}
+
+.login-error {
+  @apply text-red-600 text-sm bg-red-50 p-3 rounded-md;
+}
+
+.login-btn {
+  @apply w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow transition font-semibold text-lg;
+}
+
+.login-footer {
+  @apply mt-6 text-center text-sm text-gray-500;
+}
 
 /* 通用按钮样式 */
-.btn-primary {@apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;}
-.btn-secondary {@apply bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;}
-.btn-danger {@apply bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;}
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+}
 
 /* 通用输入框样式 */
-.input {@apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed;}
-.input-label {@apply block text-sm font-medium text-gray-700 mb-1;}
-.input-error {@apply mt-1 text-sm text-red-600;}
-.input-helper {@apply mt-1 text-sm text-gray-500;}
+.input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed;
+}
+
+.input-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.input-error {
+  @apply mt-1 text-sm text-red-600;
+}
+
+.input-helper {
+  @apply mt-1 text-sm text-gray-500;
+}
 
 /* 卡片 */
-.card {@apply bg-white rounded-xl shadow-lg border border-gray-100 p-8 mb-8;}
+.card {
+  @apply bg-white rounded-xl shadow-lg border border-gray-100 p-8 mb-8;
+}
 
 /* 表格 */
-.table-main {@apply min-w-max w-full text-sm text-gray-700;}
-.table-th {@apply p-3 font-bold text-gray-700 whitespace-nowrap bg-gray-50;}
-.table-td {@apply p-2 align-middle;}
-.table-row-hover {@apply hover:bg-blue-50 transition border-b border-blue-100;}
+.table-main {
+  @apply min-w-max w-full text-sm text-gray-700;
+}
+
+.table-th {
+  @apply p-3 font-bold text-gray-700 whitespace-nowrap bg-gray-50;
+}
+
+.table-td {
+  @apply p-2 align-middle;
+}
+
+.table-row-hover {
+  @apply hover:bg-blue-50 transition border-b border-blue-100;
+}
 
 /* 弹窗 */
-.modal-bg {@apply fixed inset-0 bg-black/30 flex items-center justify-center z-50;}
-.modal-card {@apply bg-white rounded-xl shadow-lg p-8 min-w-[320px] max-w-[90vw] relative;}
-.modal-close {@apply absolute right-4 top-4 text-gray-400 hover:text-blue-600 text-2xl cursor-pointer;}
+.modal-bg {
+  @apply fixed inset-0 bg-black/30 flex items-center justify-center z-50;
+}
+
+.modal-card {
+  @apply bg-white rounded-xl shadow-lg p-8 min-w-[320px] max-w-[90vw] relative;
+}
+
+.modal-close {
+  @apply absolute right-4 top-4 text-gray-400 hover:text-blue-600 text-2xl cursor-pointer;
+}
 
 /* 其它可根据实际页面继续补充... */
 
@@ -114,12 +180,12 @@ body {
   .ql-snow .ql-toolbar button {
     padding: 3px 5px;
   }
-  
+
   .ql-snow.ql-toolbar button,
   .ql-snow .ql-toolbar button {
     width: 24px;
   }
-  
+
   .ql-editor {
     padding: 8px;
   }
@@ -163,6 +229,16 @@ body {
 }
 
 /* 优化公告编辑器和预览内容的行距 */
-.ProseMirror, .tiptap, .editor-content, .prose {
-  line-height: 0.4;
+.ProseMirror,
+.tiptap,
+.editor-content,
+.prose {
+  line-height: 1.5;
+}
+
+.ProseMirror p,
+.tiptap p,
+.editor-content p,
+.prose p {
+  margin: 0.5em 0;
 }
