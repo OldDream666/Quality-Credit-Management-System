@@ -12,7 +12,13 @@ export default function Navbar() {
   }
   return (
     <nav className="w-full bg-white shadow flex items-center justify-between px-6 py-3 mb-6">
-      <div className="font-bold text-xl text-blue-700">素质学分管理系统</div>
+      <div
+        className="font-bold text-xl text-blue-700 cursor-pointer select-none"
+        onClick={() => router.push('/dashboard')}
+        title="返回首页"
+      >
+        素质学分管理系统
+      </div>
       <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-4">
         {user ? (
           <>

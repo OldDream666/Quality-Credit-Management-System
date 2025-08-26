@@ -116,7 +116,13 @@ export async function POST(req: Request) {
       permissions: user.permissions 
     };
 
-    return NextResponse.json({ token, user: userInfo });
+    // 设置 httpOnly cookie
+    const response = NextResponse.json({ user: userInfo });
+    response.headers.append(
+      'Set-Cookie',
+      `token=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Strict`
+    );
+    return response;
   } catch (error) {
     console.error('登录错误:', error);
     return NextResponse.json({ 

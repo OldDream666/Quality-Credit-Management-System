@@ -57,7 +57,7 @@ const roleOptions = [
   { value: "admin", label: "管理员" },
 ];
 
-export default function AddUserForm({ token, onSuccess }: { token: string, onSuccess: () => void }) {
+export default function AddUserForm({ onSuccess }: { onSuccess: () => void }) {
   const [form, setForm] = useState({
     role: "student",
     username: "",
@@ -148,7 +148,7 @@ export default function AddUserForm({ token, onSuccess }: { token: string, onSuc
     // 提交
     const res = await fetch("/api/admin/users", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+  headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: form.username,
         password: form.password,

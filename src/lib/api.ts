@@ -17,13 +17,12 @@ async function apiRequest<T>(
   endpoint: string, 
   options: RequestInit = {}
 ): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
+    credentials: 'include',
     ...options,
   };
 
@@ -48,14 +47,11 @@ async function apiUpload<T>(
   endpoint: string,
   formData: FormData
 ): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method: 'POST',
-    headers: {
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
+    headers: {},
     body: formData,
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -126,9 +122,9 @@ export const creditsAPI = {
 
   // 导出学分数据
   exportCredits: (): Promise<Blob> => {
-    const token = localStorage.getItem('token');
     return fetch(`${API_BASE}/credits/export`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {},
+      credentials: 'include',
     }).then(res => res.blob());
   },
 };
@@ -226,9 +222,9 @@ export const noticesAPI = {
 export const filesAPI = {
   // 下载证明材料
   downloadProof: (proofId: number): Promise<Blob> => {
-    const token = localStorage.getItem('token');
     return fetch(`${API_BASE}/credits/proof/${proofId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {},
+      credentials: 'include',
     }).then(res => res.blob());
   },
 };

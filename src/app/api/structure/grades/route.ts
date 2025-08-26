@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { extractUserFromRequest } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 
-// GET: 获取所有年级
-export async function GET(req: NextRequest) {
+// GET: 获取所有年级（仅管理员）
+export const GET = requireRole(['admin'])(async (req: NextRequest, user) => {
   const result = await pool.query('SELECT * FROM grades ORDER BY id DESC');
   return NextResponse.json({ grades: result.rows });
-}
+});
 
 // POST: 新增年级
-export async function POST(req: NextRequest) {
-  const user = extractUserFromRequest(req);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+export const POST = requireRole(['admin'])(async (req: NextRequest, user) => {
   const { name } = await req.json();
   if (!name) return NextResponse.json({ error: '年级名称不能为空' }, { status: 400 });
   try {
@@ -22,14 +18,10 @@ export async function POST(req: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
-}
+});
 
 // PUT: 修改年级
-export async function PUT(req: NextRequest) {
-  const user = extractUserFromRequest(req);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+export const PUT = requireRole(['admin'])(async (req: NextRequest, user) => {
   const { id, name } = await req.json();
   if (!id || !name) return NextResponse.json({ error: '参数不完整' }, { status: 400 });
   try {
@@ -45,14 +37,10 @@ export async function PUT(req: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
-}
+});
 
 // DELETE: 删除年级
-export async function DELETE(req: NextRequest) {
-  const user = extractUserFromRequest(req);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+export const DELETE = requireRole(['admin'])(async (req: NextRequest, user) => {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: '参数不完整' }, { status: 400 });
   try {
@@ -68,4 +56,4 @@ export async function DELETE(req: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
-} 
+}); 

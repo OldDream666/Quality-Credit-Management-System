@@ -14,7 +14,6 @@ import { useAuth } from "@/hooks/AuthProvider";
 
 export default function AdminUsersPage() {
   const { user, loading } = useAuth();
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
   const [users, setUsers] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [roleEditUser, setRoleEditUser] = useState<any>(null);
@@ -183,7 +182,7 @@ export default function AdminUsersPage() {
     if (!window.confirm("确定要删除该用户吗？")) return;
     const res = await fetch(`/api/admin/users/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` }
+  headers: {},
     });
     if (res.ok) {
       setUsers(users => users.filter(u => u.id !== id));
@@ -199,7 +198,7 @@ export default function AdminUsersPage() {
     if (user.role === newRole) return;
     const res = await fetch(`/api/admin/users/${user.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+  headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: newRole })
     });
     if (res.ok) {
@@ -227,7 +226,7 @@ export default function AdminUsersPage() {
     if (!window.confirm(`确定要批量删除选中的 ${selectedIds.length} 个用户吗？`)) return;
     const res = await fetch("/api/admin/users/batch-delete", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+  headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: selectedIds })
     });
     if (res.ok) {
@@ -322,21 +321,21 @@ export default function AdminUsersPage() {
           <table className="min-w-max w-full text-sm text-gray-700">
             <thead className="sticky top-0 z-20 bg-gray-50 shadow-sm">
               <tr>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">
                   <input type="checkbox" checked={pagedUsers.length>0 && pagedUsers.every(u=>selectedIds.includes(u.id))} onChange={e=>{
                     if(e.target.checked) setSelectedIds([...new Set([...selectedIds, ...pagedUsers.map(u=>u.id)])]);
                     else setSelectedIds(selectedIds.filter(id=>!pagedUsers.map(u=>u.id).includes(id)));
                   }} />
                 </th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">用户名</th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">姓名</th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">学号</th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">角色</th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">年级</th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">专业</th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">班级</th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">注册时间</th>
-                <th className="p-3 font-bold text-gray-700 whitespace-nowrap">操作</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">用户名</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">姓名</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">学号</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">角色</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">年级</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">专业</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">班级</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">注册时间</th>
+                <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -356,23 +355,23 @@ export default function AdminUsersPage() {
                     </tr>,
                     ...users.map(u => (
                       <tr key={u.id} className="hover:bg-blue-50 transition border-b border-blue-100">
-                        <td className="p-2 align-middle">
+                        <td className="p-2 align-middle text-center">
                           <input type="checkbox" checked={selectedIds.includes(u.id)} onChange={e=>{
                             if(e.target.checked) setSelectedIds([...selectedIds, u.id]);
                             else setSelectedIds(selectedIds.filter(id=>id!==u.id));
                           }} />
                         </td>
-                        <td className="p-2 align-middle">{u.username}</td>
-                        <td className="p-2 align-middle">{u.name}</td>
-                        <td className="p-2 align-middle">{u.student_id}</td>
-                        <td className="p-2 align-middle flex items-center gap-2">
+                        <td className="p-2 align-middle text-center">{u.username}</td>
+                        <td className="p-2 align-middle text-center">{u.name}</td>
+                        <td className="p-2 align-middle text-center">{u.student_id}</td>
+                        <td className="p-2 align-middle text-center flex items-center gap-2 justify-center">
                           <RoleTag role={u.role} onClick={() => setRoleEditUser(u)} roleConfigs={systemConfigs.roles} />
                         </td>
-                        <td className="p-2 align-middle">{u.grade}</td>
-                        <td className="p-2 align-middle">{u.major}</td>
-                        <td className="p-2 align-middle">{u.class}</td>
-                        <td className="p-2 align-middle">{u.created_at?.slice(0,10)}</td>
-                        <td className="p-2 align-middle flex flex-wrap gap-1 min-w-[120px]">
+                        <td className="p-2 align-middle text-center">{u.grade}</td>
+                        <td className="p-2 align-middle text-center">{u.major}</td>
+                        <td className="p-2 align-middle text-center">{u.class}</td>
+                        <td className="p-2 align-middle text-center">{u.created_at?.slice(0,10)}</td>
+                        <td className="p-2 align-middle text-center flex flex-wrap gap-1 min-w-[120px] justify-center">
                           <Button size="sm" onClick={()=>setDetailUser(u)}>详情</Button>
                           <Button size="sm" onClick={()=>handleResetPassword(u.id)}>重置密码</Button>
                           <Button size="sm" color="red" onClick={()=>handleDeleteUser(u.id)}>删除</Button>
@@ -395,7 +394,7 @@ export default function AdminUsersPage() {
         {/* 分页控制 */}
         <div className="w-full flex flex-col gap-2 mt-4">
           <div className="text-sm text-gray-600 text-center">
-            共 {filteredUsers.length} 条记录，{sortedGroups.length} 个班级
+            共 {filteredUsers.length} 条记录，{sortedGroups.filter(([key]) => key !== '管理员').length} 个班级
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
             <div className="flex items-center gap-1 justify-center">
@@ -467,7 +466,7 @@ export default function AdminUsersPage() {
           </div>
         </div>
         {/* 详情弹窗 */}
-        <UserDetailModal user={detailUser} onClose={()=>setDetailUser(null)} roleConfigs={systemConfigs.roles} />
+  <UserDetailModal user={detailUser} onClose={()=>setDetailUser(null)} roleConfigs={systemConfigs.roles} setRoleEditUser={setRoleEditUser} />
         {/* 角色编辑弹窗 */}
         {roleEditUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
@@ -508,7 +507,7 @@ function RoleTag({ role, onClick, roleConfigs }: { role: string, onClick?: () =>
 }
 
 // 详情弹窗组件
-function UserDetailModal({ user, onClose, roleConfigs }: { user: User | null, onClose: () => void, roleConfigs?: any[] }) {
+function UserDetailModal({ user, onClose, roleConfigs, setRoleEditUser }: { user: User | null, onClose: () => void, roleConfigs?: any[], setRoleEditUser: (u: User) => void }) {
   if (!user) return null;
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
@@ -519,7 +518,7 @@ function UserDetailModal({ user, onClose, roleConfigs }: { user: User | null, on
           <div><b>用户名：</b>{user.username}</div>
           <div><b>姓名：</b>{user.name || '-'}</div>
           <div><b>学号：</b>{user.student_id || '-'}</div>
-          <div><b>角色：</b><RoleTag role={user.role} roleConfigs={roleConfigs} /></div>
+          <div><b>角色：</b><RoleTag role={user.role} roleConfigs={roleConfigs} onClick={() => setRoleEditUser(user)} /></div>
           <div><b>年级：</b>{user.grade || '-'}</div>
           <div><b>专业：</b>{user.major || '-'}</div>
           <div><b>班级：</b>{user.class || '-'}</div>

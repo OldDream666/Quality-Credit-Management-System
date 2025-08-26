@@ -66,9 +66,8 @@ export default function StructurePage() {
   useEffect(() => {
     async function fetchUsers() {
       setUsersLoading(true);
-      const t = localStorage.getItem("token");
-      if (!t) return setUsersLoading(false);
-      const res = await fetch("/api/users", { headers: { Authorization: `Bearer ${t}` } });
+  // token 已由 httpOnly cookie 管理，无需传递
+  const res = await fetch("/api/users");
       const data = await res.json();
       if (res.ok) setAllUsers(data.users);
       setUsersLoading(false);

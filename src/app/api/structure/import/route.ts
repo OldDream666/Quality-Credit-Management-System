@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from '@/lib/db';
-import { extractUserFromRequest } from '@/lib/auth';
+import { requireRole } from '@/lib/auth';
 import ExcelJS from 'exceljs';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
-  const user = extractUserFromRequest(req);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+export const POST = requireRole(['admin'])(async (req: NextRequest, user) => {
   const formData = await req.formData();
   const file = formData.get('file') as File;
   if (!file) return NextResponse.json({ error: '未上传文件' }, { status: 400 });
@@ -68,4 +64,4 @@ export async function POST(req: NextRequest) {
     }
   }
   return NextResponse.json({ results });
-} 
+});
