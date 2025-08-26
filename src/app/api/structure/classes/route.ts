@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { extractUserFromRequest } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 
 // GET: 获取所有班级，支持按年级和专业过滤
-export async function GET(req: NextRequest) {
+export const GET = requireRole(['admin'])(async (req: NextRequest, user) => {
   const gradeId = req.nextUrl.searchParams.get('grade_id');
   const majorId = req.nextUrl.searchParams.get('major_id');
   
@@ -30,14 +30,10 @@ export async function GET(req: NextRequest) {
   
   const result = await pool.query(sql, params);
   return NextResponse.json({ classes: result.rows });
-}
+});
 
 // POST: 新增班级
-export async function POST(req: NextRequest) {
-  const user = extractUserFromRequest(req);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+export const POST = requireRole(['admin'])(async (req: NextRequest, user) => {
   const { name, grade_id, major_id } = await req.json();
   if (!name || !grade_id || !major_id) return NextResponse.json({ error: '参数不完整' }, { status: 400 });
   try {
@@ -46,14 +42,10 @@ export async function POST(req: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
-}
+});
 
 // PUT: 修改班级
-export async function PUT(req: NextRequest) {
-  const user = extractUserFromRequest(req);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+export const PUT = requireRole(['admin'])(async (req: NextRequest, user) => {
   const { id, name, grade_id, major_id } = await req.json();
   if (!id || !name || !grade_id || !major_id) return NextResponse.json({ error: '参数不完整' }, { status: 400 });
   try {
@@ -69,14 +61,10 @@ export async function PUT(req: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
-}
+});
 
 // DELETE: 删除班级
-export async function DELETE(req: NextRequest) {
-  const user = extractUserFromRequest(req);
-  if (!user || user.role !== 'admin') {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+export const DELETE = requireRole(['admin'])(async (req: NextRequest, user) => {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: '参数不完整' }, { status: 400 });
   try {
@@ -92,4 +80,4 @@ export async function DELETE(req: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
-} 
+});

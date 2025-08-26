@@ -97,15 +97,8 @@ export default function CreditSubmitPage() {
   }, []);
 
   useEffect(() => {
-    // 检查登录状态
-    const t = localStorage.getItem("token");
-    if (!t) {
-      setCheckingAuth(false);
-      setUser(null);
-      setTimeout(() => router.replace("/login"), 1500);
-      return;
-    }
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
+    // 检查登录状态（token 保存在 httpOnly cookie 中）
+    fetch("/api/auth/me", { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         setUser(data.user || null);
@@ -181,8 +174,7 @@ export default function CreditSubmitPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!user) {
       toast.error("请先登录");
       return;
     }
@@ -236,9 +228,7 @@ export default function CreditSubmitPage() {
 
     const res = await fetch("/api/credits", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
+      credentials: 'include',
       body: formData
     });
 

@@ -41,7 +41,7 @@ export default function CreditsHistoryPage() {
 
       const response = await fetch(`/api/credits/history/export?${params.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          // token 已由 httpOnly cookie 管理，无需传递
         }
       });
 
@@ -415,7 +415,7 @@ function ProofList({ proofs }: { proofs: any[] }) {
 
   useEffect(() => {
     if (!proofs || !proofs.length) return;
-    const t = localStorage.getItem("token");
+  // token 已由 httpOnly cookie 管理，无需传递
     const uncachedProofs = proofs.filter(p => !cacheRef.current[p.id] && !urls[p.id] && typeof pendingRef.current[p.id] === 'undefined');
     if (uncachedProofs.length === 0) {
       // 使用缓存的数据
@@ -434,7 +434,7 @@ function ProofList({ proofs }: { proofs: any[] }) {
     const proofIds = uncachedProofs.map(p => p.id).join(',');
     // 创建批量请求的 Promise
     const batchRequest = fetch(`/api/credits/proof-file?ids=${proofIds}`, {
-      headers: { Authorization: `Bearer ${t}` }
+  headers: {},
     })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
@@ -458,7 +458,7 @@ function ProofList({ proofs }: { proofs: any[] }) {
         // 批量请求失败，回退到单个请求
         const singleRequests = uncachedProofs.map(p => {
           const request = fetch(`/api/credits/proof-file?id=${p.id}`, {
-            headers: { Authorization: `Bearer ${t}` }
+            headers: {},
           })
             .then(res => res.ok ? res.blob() : null)
             .then(blob => {

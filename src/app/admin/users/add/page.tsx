@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/AuthProvider";
 
 export default function AddUserPage() {
   const { user, loading } = useAuth();
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
   const [importResult, setImportResult] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -27,7 +26,7 @@ export default function AddUserPage() {
     formData.append("file", file);
     const res = await fetch("/api/admin/users/import", {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+  headers: {},
       body: formData
     });
     const data = await res.json();
@@ -54,7 +53,7 @@ export default function AddUserPage() {
         {/* 单个添加 */}
         <div className="flex-1 mb-8 sm:mb-0 bg-white/0">
           <h2 className="font-bold mb-2">单个添加</h2>
-          <AddUserForm token={token} onSuccess={() => {}} />
+          <AddUserForm onSuccess={() => {}} />
         </div>
         {/* 批量导入 */}
         <div className="flex-1 bg-white/0">

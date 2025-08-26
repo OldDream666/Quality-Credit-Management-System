@@ -26,7 +26,6 @@ interface ConfigData {
 
 export default function SystemConfigPage() {
   const [user, setUser] = useState<any>(null);
-  const [token, setToken] = useState("");
   const [loading, setLoading] = useState(true);
   const [configData, setConfigData] = useState<ConfigData>({
     roles: [],
@@ -54,16 +53,8 @@ export default function SystemConfigPage() {
   const [editingField, setEditingField] = useState<FieldConfig | null>(null);
 
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (!t) {
-      toast.error("请先登录");
-      setTimeout(() => router.replace("/login"), 1500);
-      return;
-    }
-    setToken(t);
-
     // 验证管理员权限
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
+    fetch("/api/auth/me")
       .then(res => res.json())
       .then(data => {
         if (!data.user || data.user.role !== 'admin') {
@@ -71,7 +62,7 @@ export default function SystemConfigPage() {
           setTimeout(() => router.replace("/dashboard"), 1500);
         } else {
           setUser(data.user);
-          loadConfigs(t);
+          loadConfigs();
         }
       })
       .catch(() => {
@@ -101,12 +92,9 @@ export default function SystemConfigPage() {
     setAllFields(Array.from(fieldSet.values()));
   }, [configData]);
 
-  const loadConfigs = async (token: string) => {
+  const loadConfigs = async () => {
     try {
-      const response = await fetch("/api/admin/config", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      const response = await fetch("/api/admin/config");
       if (response.ok) {
         const data = await response.json();
         setConfigData(data);
@@ -125,8 +113,7 @@ export default function SystemConfigPage() {
       const response = await fetch("/api/admin/config", {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ type, config })
       });
@@ -135,8 +122,7 @@ export default function SystemConfigPage() {
       
       if (response.ok) {
         toast.success("配置保存成功");
-        await loadConfigs(token);
-        
+        await loadConfigs();
         // 关闭编辑状态
         setEditingRole(null);
         setIsAddingRole(false);
@@ -156,18 +142,14 @@ export default function SystemConfigPage() {
   const deleteConfig = async (type: 'role' | 'creditType' | 'status', key: string) => {
     try {
       const response = await fetch(`/api/admin/config?type=${type}&key=${encodeURIComponent(key)}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        method: 'DELETE'
       });
 
       const result = await response.json();
       
       if (response.ok) {
         toast.success("配置删除成功");
-        await loadConfigs(token);
-        
+        await loadConfigs();
         // 关闭删除确认对话框
         setDeletingRole(null);
         setDeletingCreditType(null);
@@ -783,7 +765,7 @@ export default function SystemConfigPage() {
                                     method: "POST",
                                     headers: {
                                       "Content-Type": "application/json",
-                                      Authorization: `Bearer ${token}`
+                                      // token 已由 httpOnly cookie 管理，无需传递
                                     },
                                     body: JSON.stringify({
                                       type: "availableFields",
@@ -792,7 +774,7 @@ export default function SystemConfigPage() {
                                   });
                                   if (res.ok) {
                                     toast.success("自定义字段已保存");
-                                    await loadConfigs(token); // 刷新配置
+                                    await loadConfigs(); // 刷新配置
                                   } else {
                                     toast.error("保存自定义字段失败");
                                   }
@@ -963,7 +945,7 @@ export default function SystemConfigPage() {
                         method: "POST",
                         headers: {
                           "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`
+                          // token 已由 httpOnly cookie 管理，无需传递
                         },
                         body: JSON.stringify({
                           type: "availableFields",
@@ -972,7 +954,7 @@ export default function SystemConfigPage() {
                       });
                       if (res.ok) {
                         toast.success("字段已保存");
-                        await loadConfigs(token);
+                        await loadConfigs();
                       } else {
                         toast.error("保存字段失败");
                       }

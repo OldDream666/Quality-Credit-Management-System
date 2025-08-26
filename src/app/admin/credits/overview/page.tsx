@@ -30,7 +30,7 @@ export default function CreditsOverview() {
       .then(res => res.ok ? res.json() : null)
       .then(configData => {
         if (configData) {
-          localStorage.setItem('systemConfigs', JSON.stringify(configData));
+          // localStorage 仅用于缓存配置，与 token 无关，无需处理
           setSystemConfigs(configData);
         }
       });

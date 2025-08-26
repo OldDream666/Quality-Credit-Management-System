@@ -21,19 +21,11 @@ export function useAuth(): UseAuthReturn {
   // 检查本地存储的token并获取用户信息
   const refreshUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
       const response = await authAPI.getMe();
       if (response.user) {
         setUser(response.user);
         setError(null);
       } else {
-        setUser(null);
-        localStorage.removeItem('token');
         // 清除cookie
         document.cookie = 'token=; Max-Age=0; path=/;';
         // 只有在当前不在登录页时才重定向
@@ -43,7 +35,6 @@ export function useAuth(): UseAuthReturn {
       }
     } catch (err: any) {
       setUser(null);
-      localStorage.removeItem('token');
       // 清除cookie
       document.cookie = 'token=; Max-Age=0; path=/;';
       setError('认证失败，请重新登录');
@@ -62,7 +53,6 @@ export function useAuth(): UseAuthReturn {
       setLoading(true);
       setError(null);
       const response = await authAPI.login({ username, password });
-      localStorage.setItem('token', response.token);
       // 同步写入cookie，确保服务端能识别token
       document.cookie = `token=${response.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
       setUser(response.user);
@@ -87,7 +77,6 @@ export function useAuth(): UseAuthReturn {
 
   // 登出
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
     // 清除cookie
     document.cookie = 'token=; Max-Age=0; path=/;';
     setUser(null);

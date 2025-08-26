@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { requireAuth } from '@/lib/auth';
 
 // GET /api/credits/proof?id=xxx
-export async function GET(req: Request) {
+export const GET = requireAuth(async (req, user) => {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "缺少id" }, { status: 400 });
@@ -14,11 +15,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "未找到文件" }, { status: 404 });
   }
   const { proof_file, proof_filename, proof_mimetype } = result.rows[0];
-  return new Response(proof_file, {
+  return new NextResponse(proof_file, {
     status: 200,
     headers: {
       "Content-Type": proof_mimetype || "application/octet-stream",
       "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(proof_filename)}`,
     },
   });
-}
+});

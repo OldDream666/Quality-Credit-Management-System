@@ -23,25 +23,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // 拉取用户信息
   const refreshUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
       const response = await authAPI.getMe();
       if (response.user) {
         setUser(response.user);
         setError(null);
       } else {
         setUser(null);
-        localStorage.removeItem('token');
         document.cookie = 'token=; Max-Age=0; path=/;';
         router.replace('/login');
       }
     } catch (err: any) {
       setUser(null);
-      localStorage.removeItem('token');
       document.cookie = 'token=; Max-Age=0; path=/;';
       setError('认证失败，请重新登录');
       router.replace('/login');
@@ -56,8 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       setError(null);
       const response = await authAPI.login({ username, password });
-      localStorage.setItem('token', response.token);
-      document.cookie = `token=${response.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      // token 已由 httpOnly cookie 管理，无需前端存储
       setUser(response.user);
       window.dispatchEvent(new Event('login-status-change'));
       return true;
@@ -73,8 +64,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   // 登出
-  const logout = useCallback(() => {
-    localStorage.removeItem('token');
+  const logout = useCallback(async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
     document.cookie = 'token=; Max-Age=0; path=/;';
     setUser(null);
     setError(null);

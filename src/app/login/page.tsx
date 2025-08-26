@@ -23,6 +23,13 @@ function LoginPageInner() {
     if (error) toast.error(error);
   }, [error]);
 
+  // 如果已经登录且加载完毕，自动重定向到 redirect
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(redirect);
+    }
+  }, [user, loading, router, redirect]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) return;
@@ -49,8 +56,8 @@ function LoginPageInner() {
   if (user) return null;
 
   return (
-    <div className="login-bg min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4">
-      <Card className="w-full max-w-md">
+  <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4">
+  <Card className="w-full max-w-md mb-0">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">欢迎登录</h1>
           <p className="text-gray-600">学生素质学分管理系统</p>

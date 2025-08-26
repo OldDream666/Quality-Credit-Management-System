@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { verifyJwt } from "@/lib/jwt";
 import { DatabaseConfigManager } from "@/lib/dbConfig";
-import { requireAuth, extractUserFromRequest } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import type { NextRequest } from 'next/server';
 
 function bufferToBase64(buffer: Buffer) {
@@ -10,10 +10,8 @@ function bufferToBase64(buffer: Buffer) {
 }
 
 // GET /api/credits/proof-file?id=xxx 或 /api/credits/proof-file?ids=1,2,3
-export async function GET(req: NextRequest) {
+export const GET = requireAuth(async (req, user) => {
   try {
-    const user = extractUserFromRequest(req);
-    if (!user) return NextResponse.json({ error: '未登录' }, { status: 401 });
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const ids = searchParams.get("ids");
@@ -80,16 +78,17 @@ export async function GET(req: NextRequest) {
     if (!(user.id === user_id || canViewFiles)) {
       return NextResponse.json({ error: "无权限" }, { status: 403 });
     }
-    // 直接返回二进制流
-    return new Response(file, {
+    // 直接返回二进制流（用 NextResponse）
+    const res = new NextResponse(file, {
       status: 200,
       headers: {
         'Content-Type': mimetype,
         'Content-Disposition': `inline; filename="${encodeURIComponent(filename)}"`
       }
     });
+    return res;
   } catch (err) {
     console.error('proof-file接口异常:', err);
     return NextResponse.json({ error: '服务器内部错误', detail: String(err) }, { status: 500 });
   }
-}
+});

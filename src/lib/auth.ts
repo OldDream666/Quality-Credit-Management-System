@@ -114,9 +114,11 @@ export function hasRole(user: AuthUser, roles: string[]): boolean {
 
 // 从请求中提取用户信息
 export function extractUserFromRequest(req: NextRequest): AuthUser | null {
-  // 优先用 header 里的 token，其次才用 cookie
-  const token = req.headers.get('authorization')?.replace('Bearer ', '') ||
-                req.cookies.get('token')?.value;
+  // 优先 header 里的 token，其次 cookie（NextRequest 兼容）
+  let token = req.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token && typeof (req as any).cookies?.get === 'function') {
+    token = (req as any).cookies.get('token')?.value;
+  }
   if (!token) return null;
   try {
     const payload = verifyJwt(token);

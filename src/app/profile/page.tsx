@@ -63,10 +63,9 @@ export default function ProfilePage() {
     }
 
     setPwdLoading(true);
-    const token = localStorage.getItem('token');
     const res = await fetch("/api/auth/change-password", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ old_password: oldPwd, new_password: newPwd })
     });
     const data = await res.json();
@@ -126,12 +125,21 @@ export default function ProfilePage() {
             onChange={e => setNewPwd(e.target.value)}
           />
           {newPwd && (
-            <div className={`text-xs mt-1 ${
-              getPasswordStrength(newPwd) === '强' ? 'text-green-600' :
-              getPasswordStrength(newPwd) === '中' ? 'text-orange-600' :
-              'text-red-600'
-            }`}>
-              提示：密码需包含字母和数字，建议使用大小写字母、数字和特殊字符。
+            <div className="mt-1">
+              {/* 密码强度进度条 */}
+              <div className="w-full h-2 bg-gray-200 rounded">
+                <div
+                  className={
+                    `h-2 rounded transition-all duration-300 ` +
+                    (getPasswordStrength(newPwd) === '强' ? 'bg-green-500 w-full' :
+                     getPasswordStrength(newPwd) === '中' ? 'bg-orange-400 w-2/3' :
+                     'bg-red-500 w-1/3')
+                  }
+                />
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                提示：密码需包含字母和数字，建议使用大小写字母、数字和特殊字符。
+              </div>
             </div>
           )}
         </div>

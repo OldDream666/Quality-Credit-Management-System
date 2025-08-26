@@ -154,10 +154,10 @@ ON CONFLICT (category, config_key) DO NOTHING;
 
 -- 插入默认学分类型配置
 INSERT INTO system_config (category, config_key, config_value) VALUES
-('credit_type', '个人活动', '{"key":"个人活动","label":"个人活动","description":"如学生会、社团、讲座、社会实践等校内外活动。需上传相关证明材料。","color":"bg-blue-100 text-blue-800","cardColor":"from-blue-50 to-blue-100","fields":["activityName","proofFiles"],"defaultScore":15,"scoreCalculation":"fixed"}'),
-('credit_type', '个人比赛', '{"key":"个人比赛","label":"个人比赛","description":"如各类学科竞赛、技能大赛、文体比赛等。需上传获奖证书或成绩单。","color":"bg-purple-100 text-purple-800","cardColor":"from-purple-50 to-purple-100","fields":["competitionName","proofFiles"],"scoreCalculation":"manual"}'),
-('credit_type', '个人证书', '{"key":"个人证书","label":"个人证书","description":"如英语等级证书、计算机等级证书等国家或行业认证。需上传证书文件。","color":"bg-indigo-100 text-indigo-800","cardColor":"from-indigo-50 to-indigo-100","fields":["certificateName","proofFiles"],"scoreCalculation":"manual"}'),
-('credit_type', '志愿活动', '{"key":"志愿活动","label":"志愿活动","description":"如志愿服务、公益活动等，需准确填写活动名称和时长，并上传相关证明。","color":"bg-orange-100 text-orange-800","cardColor":"from-orange-50 to-orange-100","fields":["volunteerName","volunteerHours","proofFiles"],"scoreCalculation":"time_based","scorePerHour":6}')
+('credit_type', '个人活动', '{"key":"个人活动","label":"个人活动","description":"如学生会、社团、讲座、社会实践等校内外活动。需上传相关证明材料。","color":"bg-blue-100 text-blue-800","cardColor":"from-blue-50 to-blue-100","fields":["activityName","proofFiles"],"defaultScore":15,"scoreCalculation":"fixed","approverRoles":["monitor"]}'),
+('credit_type', '个人比赛', '{"key":"个人比赛","label":"个人比赛","description":"如各类学科竞赛、技能大赛、文体比赛等。需上传获奖证书或成绩单。","color":"bg-purple-100 text-purple-800","cardColor":"from-purple-50 to-purple-100","fields":["competitionName","proofFiles"],"scoreCalculation":"manual","approverRoles":["monitor"]}'),
+('credit_type', '个人证书', '{"key":"个人证书","label":"个人证书","description":"如英语等级证书、计算机等级证书等国家或行业认证。需上传证书文件。","color":"bg-indigo-100 text-indigo-800","cardColor":"from-indigo-50 to-indigo-100","fields":["certificateName","proofFiles"],"scoreCalculation":"manual","approverRoles":["monitor"]}'),
+('credit_type', '志愿活动', '{"key":"志愿活动","label":"志愿活动","description":"如志愿服务、公益活动等，需准确填写活动名称和时长，并上传相关证明。","color":"bg-orange-100 text-orange-800","cardColor":"from-orange-50 to-orange-100","fields":["volunteerName","volunteerHours","proofFiles"],"scoreCalculation":"time_based","scorePerHour":6,"approverRoles":["monitor"]}')
 ON CONFLICT (category, config_key) DO NOTHING;
 
 -- 插入默认状态配置

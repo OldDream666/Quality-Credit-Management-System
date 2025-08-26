@@ -6,7 +6,7 @@ import RichTextEditor from "@/components/RichTextEditor";
 
 export default function AdminNotices() {
   const [notices, setNotices] = useState<any[]>([]);
-  const [token, setToken] = useState("");
+  // token 已由 httpOnly cookie 管理，无需传递
   const [user, setUser] = useState<any>(null);
   const [editId, setEditId] = useState<number|null>(null);
   const [title, setTitle] = useState("");
@@ -18,15 +18,15 @@ export default function AdminNotices() {
   const router = useRouter();
 
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (!t) {
+  // token 已由 httpOnly cookie 管理，无需传递
+  if (false) {
       setError("请先登录");
       setCheckingAuth(false);
       setTimeout(() => router.replace("/login"), 1500);
       return;
     }
-    setToken(t);
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
+  // token 已由 httpOnly cookie 管理，无需传递
+  fetch("/api/auth/me")
       .then(res => res.json())
       .then(data => {
         if (!data.user) {
@@ -77,7 +77,7 @@ export default function AdminNotices() {
       method,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+  // token 已由 httpOnly cookie 管理，无需传递
       },
       body: JSON.stringify({ title, content }),
     });
@@ -99,7 +99,7 @@ export default function AdminNotices() {
     try {
       const res = await fetch(`/api/notices/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+  headers: {},
       });
       if (!res.ok) {
         throw new Error("删除失败");

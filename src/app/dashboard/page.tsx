@@ -29,7 +29,6 @@ const getActivityName = (type: string, desc: any) => {
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
   const [credits, setCredits] = useState<any[]>([]);
   const [approvals, setApprovals] = useState<any[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]); // 公告
@@ -453,8 +452,9 @@ export default function Dashboard() {
                         const imgIdx = imageProofs.findIndex((img: any) => img.id === p.id);
                         return (
                           <li key={idx} style={{ cursor: 'pointer', display: 'inline-block', marginRight: 8 }} onClick={() => setPreviewIndex(imgIdx)}>
-                            <span style={{ maxWidth: 80, maxHeight: 80, borderRadius: 4, display: 'inline-block', overflow: 'hidden', background: '#f3f4f6' }}>
-                              <AuthImage src={p.url} alt={p.name || `材料${idx + 1}`} token={token} style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 4, display: 'block' }} />
+                            {/* 缩略图容器：使用 max 宽高约束，图片保持原始纵横比 */}
+                            <span style={{ maxWidth: 120, maxHeight: 120, borderRadius: 4, display: 'inline-block', overflow: 'hidden', background: '#f3f4f6' }}>
+                              <AuthImage src={p.url} alt={p.name || `材料${idx + 1}`} style={{ maxWidth: 120, maxHeight: 120, width: 'auto', height: 'auto', borderRadius: 4, display: 'block' }} />
                             </span>
                           </li>
                         );
@@ -474,7 +474,7 @@ export default function Dashboard() {
                       index={previewIndex}
                       onClose={() => setPreviewIndex(null)}
                       onSwitch={i => setPreviewIndex(i)}
-                      token={token}
+                      // token 已由 httpOnly cookie 管理，无需传递
                     />
                   )}
                 </div>
@@ -489,9 +489,8 @@ export default function Dashboard() {
   // 详情弹窗拉取单条详情，必须在组件内部
   async function handleShowDetail(item: any) {
     try {
-      const t = localStorage.getItem("token");
       const res = await fetch(`/api/credits/${item.id}`, {
-        headers: { Authorization: `Bearer ${t}` },
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -507,11 +506,11 @@ export default function Dashboard() {
 }
 
 // 修改AuthImage支持style透传
-function AuthImage({ src, alt, token, style }: { src: string, alt: string, token: string, style?: React.CSSProperties }) {
+function AuthImage({ src, alt, style }: { src: string, alt: string, style?: React.CSSProperties }) {
   const [url, setUrl] = useState<string>("");
   useEffect(() => {
     let revoke: string | null = null;
-    fetch(src, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(src)
       .then(res => res.blob())
       .then(blob => {
         const objectUrl = URL.createObjectURL(blob);
@@ -519,18 +518,21 @@ function AuthImage({ src, alt, token, style }: { src: string, alt: string, token
         revoke = objectUrl;
       });
     return () => { if (revoke) URL.revokeObjectURL(revoke); };
-  }, [src, token]);
+  }, [src]);
   if (!url) return <span className="text-gray-400">图片加载中...</span>;
-  return <img src={url} alt={alt} style={style} className="border shadow" />;
+  // 默认样式：限制最大尺寸并保持纵横比，允许外部传入样式覆盖特定属性
+  const defaultStyle: React.CSSProperties = { maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', display: 'block' };
+  const finalStyle = { ...defaultStyle, ...style };
+  return <img src={url} alt={alt} style={finalStyle} className="border shadow" />;
 }
 
-// 审批页同款图片预览弹窗，支持token
-function ImagePreviewModal({ proofs, index, onClose, onSwitch, token }: { proofs: any[], index: number, onClose: () => void, onSwitch: (i: number) => void, token: string }) {
+// 审批页同款图片预览弹窗
+function ImagePreviewModal({ proofs, index, onClose, onSwitch }: { proofs: any[], index: number, onClose: () => void, onSwitch: (i: number) => void }) {
   if (!proofs[index] || !proofs[index].url) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
       <div className="relative" onClick={e => e.stopPropagation()}>
-        <AuthImage src={proofs[index].url} alt={proofs[index].filename || proofs[index].name} token={token} style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 8, background: '#fff', display: 'block' }} />
+        <AuthImage src={proofs[index].url} alt={proofs[index].filename || proofs[index].name} style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 8, background: '#fff', display: 'block' }} />
         <button className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl" onClick={onClose}>&times;</button>
         {proofs.length > 1 && (
           <>

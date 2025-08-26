@@ -9,7 +9,7 @@ body {
 }
 
 .card {
-  @apply bg-white bg-opacity-90 rounded-xl shadow-card p-8 mb-8;
+  @apply bg-white bg-opacity-90 rounded-xl shadow-card p-8;
 }
 
 .btn-primary {
@@ -160,4 +160,9 @@ body {
 
 .prose a:hover {
   text-decoration: underline;
+}
+
+/* 优化公告编辑器和预览内容的行距 */
+.ProseMirror, .tiptap, .editor-content, .prose {
+  line-height: 0.4;
 }

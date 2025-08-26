@@ -6,7 +6,6 @@ import { toast } from 'react-hot-toast';
 
 export default function AdminCreditsPage() {
   const { user, loading } = useAuth();
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
   const [credits, setCredits] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [pendingIndex, setPendingIndex] = useState(0); // 当前审批单索引
@@ -54,7 +53,7 @@ export default function AdminCreditsPage() {
       .then(res => res.ok ? res.json() : null)
       .then(configData => {
         if (configData) {
-          localStorage.setItem('systemConfigs', JSON.stringify(configData));
+          // 不再将 systemConfigs 存入 localStorage（可能包含敏感或过期的权限数据）
           setSystemConfigs(configData);
         }
       });
@@ -90,8 +89,7 @@ export default function AdminCreditsPage() {
     const res = await fetch("/api/credits/admin", {
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
+        "Content-Type": "application/json"
       },
       body: JSON.stringify(body)
     });
@@ -320,9 +318,6 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
         <span className="font-bold">证明材料：</span>
         <ProofList proofs={credit.proofs} />
       </div>
-      <div>
-        <span className="font-bold">状态：</span>{statusMap[credit.status] || credit.status}
-      </div>
       <div className="flex gap-4 mt-2">
         <button
           className="bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2 rounded shadow transition focus:outline-none focus:ring-2 focus:ring-green-300"
@@ -449,32 +444,23 @@ function ProofList({ proofs }: { proofs: any[] }) {
   );
 }
 
-// 新增：带token加载图片
+// 加载图片（不再传递token，依赖 httpOnly cookie）
 function ProofImage({ proofId, filename, style }: { proofId: number, filename: string, style?: React.CSSProperties }) {
   const [url, setUrl] = useState<string>("");
   const cacheRef = useRef<{ [id: number]: string }>({});
   const pendingRef = useRef<{ [id: number]: Promise<string> }>({});
-  
   useEffect(() => {
-    // 检查缓存
     if (cacheRef.current[proofId]) {
       setUrl(cacheRef.current[proofId]);
       return;
     }
-    
-    // 检查是否已有pending请求
     if (typeof pendingRef.current[proofId] !== 'undefined') {
       pendingRef.current[proofId].then(cachedUrl => {
         if (cachedUrl) setUrl(cachedUrl);
       });
       return;
     }
-    
-    // 发起新请求
-    const token = localStorage.getItem("token");
-    const request = fetch(`/api/credits/proof-file?id=${proofId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const request = fetch(`/api/credits/proof-file?id=${proofId}`)
       .then(res => res.ok ? res.blob() : null)
       .then(blob => {
         if (blob) {
@@ -490,18 +476,16 @@ function ProofImage({ proofId, filename, style }: { proofId: number, filename: s
         delete pendingRef.current[proofId];
         return "";
       });
-    
     pendingRef.current[proofId] = request;
     request.then(url => {
       if (url) setUrl(url);
     });
   }, [proofId]);
-  
   if (!url) return <span style={{display:'inline-block',width:60,height:60,background:'#f3f3f3',borderRadius:4,textAlign:'center',lineHeight:'60px',color:'#bbb',...style}}>图片加载中</span>;
   return <img src={url} alt={filename} style={{ maxWidth: 60, maxHeight: 60, borderRadius: 4, cursor: 'pointer', ...style }} />;
 }
 
-// 新增：带token下载/预览非图片文件
+// 下载/预览非图片文件（不再传递token，依赖 httpOnly cookie）
 function ProofFileLink({ proofId, filename, mimetype }: { proofId: number, filename: string, mimetype?: string }) {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -510,10 +494,7 @@ function ProofFileLink({ proofId, filename, mimetype }: { proofId: number, filen
     setDownloading(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/credits/proof-file?id=${proofId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await fetch(`/api/credits/proof-file?id=${proofId}`);
       if (!res.ok) {
         const txt = await res.text();
         setError(txt || "下载失败");
@@ -555,35 +536,25 @@ function ProofFileLink({ proofId, filename, mimetype }: { proofId: number, filen
     </span>
   );
 }
-
+// 图片预览弹窗（不再传递token，依赖 httpOnly cookie）
 function ImagePreviewModal({ proofs, index, onClose, onSwitch }: { proofs: any[], index: number, onClose: () => void, onSwitch: (i: number) => void }) {
   const [url, setUrl] = useState<string>("");
   const cacheRef = useRef<{ [id: number]: string }>({});
   const pendingRef = useRef<{ [id: number]: Promise<string> }>({});
-  
   useEffect(() => {
     const proofId = proofs[index]?.id;
     if (!proofId) return;
-    
-    // 检查缓存
     if (cacheRef.current[proofId]) {
       setUrl(cacheRef.current[proofId]);
       return;
     }
-    
-    // 检查是否已有pending请求
     if (typeof pendingRef.current[proofId] !== 'undefined') {
       pendingRef.current[proofId].then(cachedUrl => {
         if (cachedUrl) setUrl(cachedUrl);
       });
       return;
     }
-    
-    // 发起新请求
-    const token = localStorage.getItem("token");
-    const request = fetch(`/api/credits/proof-file?id=${proofId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const request = fetch(`/api/credits/proof-file?id=${proofId}`)
       .then(res => res.ok ? res.blob() : null)
       .then(blob => {
         if (blob) {
@@ -599,13 +570,11 @@ function ImagePreviewModal({ proofs, index, onClose, onSwitch }: { proofs: any[]
         delete pendingRef.current[proofId];
         return "";
       });
-    
     pendingRef.current[proofId] = request;
     request.then(url => {
       if (url) setUrl(url);
     });
   }, [index, proofs]);
-  
   if (!url) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
