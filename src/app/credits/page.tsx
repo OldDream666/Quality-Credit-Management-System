@@ -30,6 +30,9 @@ export default function CreditSubmitPage() {
   const [systemConfigs, setSystemConfigs] = useState<any>({ roles: [] });
   const [configLoaded, setConfigLoaded] = useState(false);
   const [availableFields, setAvailableFields] = useState<FieldConfig[]>([]);
+  // 提交防抖/禁用
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   // 类型说明映射（从动态配置获取）
   const getTypeExplanation = (type: string) => {
@@ -128,9 +131,10 @@ export default function CreditSubmitPage() {
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isSubmitting) return;
     const droppedFiles = Array.from(e.dataTransfer.files);
     handleFiles(droppedFiles);
-  }, [files]);
+  }, [files, isSubmitting]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -172,14 +176,22 @@ export default function CreditSubmitPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // 防止重复提交：若正在提交则直接返回
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setIsSubmitting(true);
     setError("");
     setSuccess("");
     if (!user) {
       toast.error("请先登录");
+      submittingRef.current = false;
+      setIsSubmitting(false);
       return;
     }
     if (!type) {
       toast.error("请选择类型");
+      submittingRef.current = false;
+      setIsSubmitting(false);
       return;
     }
 
@@ -193,6 +205,8 @@ export default function CreditSubmitPage() {
         // 检查文件上传
         if (files.length === 0) {
           toast.error("请上传证明文件");
+          submittingRef.current = false;
+          setIsSubmitting(false);
           return;
         }
       } else {
@@ -201,6 +215,8 @@ export default function CreditSubmitPage() {
         if (!value || value.trim() === '') {
           const fieldLabel = getFieldLabelByKey(fieldKey);
           toast.error(`请填写${fieldLabel}`);
+          submittingRef.current = false;
+          setIsSubmitting(false);
           return;
         }
       }
@@ -226,20 +242,25 @@ export default function CreditSubmitPage() {
       formData.append("proof", renamed);
     }
 
-    const res = await fetch("/api/credits", {
-      method: "POST",
-      credentials: 'include',
-      body: formData
-    });
+    try {
+      const res = await fetch("/api/credits", {
+        method: "POST",
+        credentials: 'include',
+        body: formData
+      });
 
-    const data = await res.json();
-    if (res.ok) {
-      toast.success("提交成功，等待审批");
-      setType(""); 
-      resetFields();
-      setFiles([]);
-    } else {
-      toast.error(data.error || "提交失败");
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("提交成功，等待审批");
+        setType(""); 
+        resetFields();
+        setFiles([]);
+      } else {
+        toast.error(data.error || "提交失败");
+      }
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   }
 
@@ -335,7 +356,8 @@ export default function CreditSubmitPage() {
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   className="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50 flex flex-col items-center justify-center cursor-pointer transition hover:bg-blue-100"
-                  onClick={() => fileRef.current?.click()}
+                  onClick={() => { if (!isSubmitting) fileRef.current?.click(); }}
+                  aria-disabled={isSubmitting}
                   style={{ minHeight: 90 }}
                 >
                   <input
@@ -345,12 +367,13 @@ export default function CreditSubmitPage() {
                     multiple
                     className="hidden"
                     onChange={handleFileInput}
+                    disabled={isSubmitting}
                   />
                   <div className="flex flex-col items-center">
                     <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="text-blue-400 mb-1">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
                     </svg>
-                    <span className="text-blue-700 font-medium">点击或拖拽文件到此处上传{required ? '（必填）' : ''}</span>
+                    <span className="text-blue-700 font-medium">点击或拖拽文件到此处上传{required ? '（必填）' : ''}{isSubmitting ? '（提交中，已禁用）' : ''}</span>
                     <span className="text-gray-400 text-xs mt-1">支持图片、PDF，最多6个文件</span>
                   </div>
                 </div>
@@ -365,7 +388,7 @@ export default function CreditSubmitPage() {
                           <span className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded text-gray-500 text-xs">PDF</span>
                         )}
                         <span className="flex-1 truncate">{file.name}</span>
-                        <button type="button" onClick={() => removeFile(idx)} className="text-red-500 hover:underline text-xs">删除</button>
+                        <button type="button" onClick={() => !isSubmitting && removeFile(idx)} className="text-red-500 hover:underline text-xs" disabled={isSubmitting}>删除</button>
                       </li>
                     ))}
                   </ul>
@@ -459,7 +482,14 @@ export default function CreditSubmitPage() {
             />
           );
         })}
-        <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded shadow transition w-full sm:w-auto" type="submit">提交</button>
+        <button
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded shadow transition w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
+          type="submit"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+        >
+          {isSubmitting ? '提交中…' : '提交'}
+        </button>
         {success && <div className="text-green-600 text-sm">{success}</div>}
       </form>
     </div>
