@@ -11,8 +11,8 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  // @ts-ignore
   experimental: {
+    // @ts-ignore
     turbo: {
       resolveAlias: {
         'tinymce': 'tinymce/tinymce.min.js',
