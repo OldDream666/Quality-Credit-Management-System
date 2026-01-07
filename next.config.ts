@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  // @ts-ignore
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        'tinymce': 'tinymce/tinymce.min.js',
+      },
+    },
+  },
   async headers() {
     return [
       {
