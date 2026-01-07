@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import type { FieldConfig } from '@/config/system';
 
 // 从配置系统获取类型选项（将通过API动态加载）
-let typeOptions: Array<{value: string, label: string}> = [];
+let typeOptions: Array<{ value: string, label: string }> = [];
 let creditTypesConfig: Record<string, any> = {};
 
 export default function CreditSubmitPage() {
@@ -17,7 +17,7 @@ export default function CreditSubmitPage() {
   const [volunteerHours, setVolunteerHours] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
+
   // 动态字段数据
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
@@ -198,7 +198,7 @@ export default function CreditSubmitPage() {
     // 验证必填字段
     const currentFields = getCurrentFields();
     const requiredFields = currentFields.filter((field: string) => isFieldRequired(field));
-    
+
     for (const fieldKey of requiredFields) {
       const fieldType = getFieldType(fieldKey);
       if (fieldType === 'file' || fieldKey === 'proofFiles') {
@@ -224,7 +224,7 @@ export default function CreditSubmitPage() {
 
     const formData = new FormData();
     formData.append("type", type);
-    
+
     // 添加所有字段数据
     for (const fieldKey of currentFields) {
       const value = fieldValues[fieldKey];
@@ -252,7 +252,7 @@ export default function CreditSubmitPage() {
       const data = await res.json();
       if (res.ok) {
         toast.success("提交成功，等待审批");
-        setType(""); 
+        setType("");
         resetFields();
         setFiles([]);
       } else {
@@ -270,7 +270,7 @@ export default function CreditSubmitPage() {
       ...prev,
       [fieldKey]: value
     }));
-    
+
     // 为了兼容现有代码，同时更新对应的状态
     switch (fieldKey) {
       case 'activityName':
@@ -314,16 +314,8 @@ export default function CreditSubmitPage() {
   if (!configLoaded) return <div>加载中...</div>;
 
   return (
-    <div className="max-w-md mx-auto card mt-8 sm:mt-16 p-4 sm:p-10 bg-white rounded-2xl shadow-xl relative">
-      <span
-        className="absolute left-4 top-4 text-blue-700 hover:underline hover:text-blue-900 cursor-pointer flex items-center text-base select-none"
-        onClick={() => router.push("/dashboard")}
-      >
-        <svg className="inline mr-1" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 16L7 10L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        返回
-      </span>
-      <div style={{ height: 12 }} />
-      <h1 className="text-2xl sm:text-3xl font-extrabold mb-8 text-blue-700">素质学分申请</h1>
+    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-8">
+      <h1 className="text-2xl sm:text-3xl font-extrabold mb-6 text-gray-800">素质学分申请</h1>
       <form onSubmit={handleSubmit} className="space-y-6 flex flex-col">
         <select className="input" value={type} onChange={e => {
           setType(e.target.value);
@@ -345,9 +337,9 @@ export default function CreditSubmitPage() {
           const fieldDescription = getFieldDescription(fieldKey);
           const fieldType = getFieldType(fieldKey);
           const required = isFieldRequired(fieldKey);
-          
-          // 证明材料上传字段，按类型
-          if (fieldType === 'file') {
+
+          // 证明材料上传字段，按类型或字段名判断
+          if (fieldType === 'file' || fieldKey === 'proofFiles' || fieldKey === 'proofs') {
             return (
               <div key={fieldKey}>
                 {/* 自定义文件上传控件 */}
@@ -371,7 +363,7 @@ export default function CreditSubmitPage() {
                   />
                   <div className="flex flex-col items-center">
                     <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="text-blue-400 mb-1">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
                     </svg>
                     <span className="text-blue-700 font-medium">点击或拖拽文件到此处上传{required ? '（必填）' : ''}{isSubmitting ? '（提交中，已禁用）' : ''}</span>
                     <span className="text-gray-400 text-xs mt-1">支持图片、PDF，最多6个文件</span>
@@ -396,13 +388,13 @@ export default function CreditSubmitPage() {
               </div>
             );
           }
-          
+
           if (fieldKey === 'volunteerHours') {
             const config = creditTypesConfig[type];
             const scorePerHour = config?.scorePerHour || 0;
             const hours = parseFloat(fieldValue) || 0;
             const calculatedScore = hours * scorePerHour;
-            
+
             return (
               <div key={fieldKey}>
                 <input
@@ -425,7 +417,7 @@ export default function CreditSubmitPage() {
               </div>
             );
           }
-          
+
           if (fieldKey === 'eventDate') {
             return (
               <input
@@ -439,7 +431,7 @@ export default function CreditSubmitPage() {
               />
             );
           }
-          
+
           if (fieldKey === 'score') {
             return (
               <input
@@ -455,7 +447,7 @@ export default function CreditSubmitPage() {
               />
             );
           }
-          
+
           if (fieldKey === 'remarks') {
             return (
               <textarea
@@ -468,7 +460,7 @@ export default function CreditSubmitPage() {
               />
             );
           }
-          
+
           // 默认文本输入
           return (
             <input

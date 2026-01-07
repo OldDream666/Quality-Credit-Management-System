@@ -23,7 +23,7 @@ const getActivityName = (type: string, desc: any) => {
   if (desc.volunteerName) {
     return desc.volunteerName + (desc.volunteerHours ? `-${desc.volunteerHours}h` : '');
   }
-  
+
   return null;
 };
 
@@ -84,112 +84,105 @@ export default function Dashboard() {
 
   // 管理员仪表盘
   if (user.role === 'admin') {
-  const total = approvals.length;
-  const pending = approvals.filter((c:any)=>c.status==='pending').length;
-  const approved = approvals.filter((c:any)=>c.status==='approved').length;
-  const rejected = approvals.filter((c:any)=>c.status==='rejected').length;
-  const userCount = allUsers.length;
-  
-  // 动态统计各角色数量（基于实际用户数据）
-  const roleStats: Record<string, { count: number; label: string; color: string }> = {};
-  
-  // 从用户数据中动态收集角色统计
-  allUsers.forEach(user => {
-    if (!roleStats[user.role]) {
-      roleStats[user.role] = {
-        count: 0,
-        label: getRoleLabel(user.role, systemConfigs.roles) || user.role,
-        color: getColorForRole(user.role)
-      };
-    }
-    roleStats[user.role].count++;
-  });
+    const total = approvals.length;
+    const pending = approvals.filter((c: any) => c.status === 'pending').length;
+    const approved = approvals.filter((c: any) => c.status === 'approved').length;
+    const rejected = approvals.filter((c: any) => c.status === 'rejected').length;
+    const userCount = allUsers.length;
 
-  // 获取角色对应的颜色（动态获取）
-  function getColorForRole(role: string) {
-    if (systemConfigs.roles && systemConfigs.roles.length > 0) {
-      const config = systemConfigs.roles.find((r: any) => r.key === role);
-      return config?.cardColor || 'from-gray-50 to-gray-100';
-    }
-    return 'from-gray-50 to-gray-100'; // 默认颜色
-  }
+    // 动态统计各角色数量（基于实际用户数据）
+    const roleStats: Record<string, { count: number; label: string; color: string }> = {};
 
-  // 获取角色对应的文字颜色（动态获取）
-  function getTextColorForRole(role: string) {
-    if (systemConfigs.roles && systemConfigs.roles.length > 0) {
-      const config = systemConfigs.roles.find((r: any) => r.key === role);
-      // 从color字段中提取文字颜色，如 "bg-blue-100 text-blue-700" -> "text-blue-700"
-      if (config?.color) {
-        const colorMatch = config.color.match(/text-[\w-]+/);
-        return colorMatch ? colorMatch[0] : 'text-gray-700';
+    // 从用户数据中动态收集角色统计
+    allUsers.forEach(user => {
+      if (!roleStats[user.role]) {
+        roleStats[user.role] = {
+          count: 0,
+          label: getRoleLabel(user.role, systemConfigs.roles) || user.role,
+          color: getColorForRole(user.role)
+        };
       }
-    }
-    return 'text-gray-700'; // 默认颜色
-  }
-  
-  const latestUsers = [...allUsers].sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime()).slice(0,5);
+      roleStats[user.role].count++;
+    });
 
-  return (
-    <div className="max-w-5xl mx-auto card mt-12 p-4 sm:p-10 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-primary mb-2">欢迎，管理员 {user.name || user.username}</h1>
-          <div className="text-gray-500 text-base">账号：{user.username}</div>
+    // 获取角色对应的颜色（动态获取）
+    function getColorForRole(role: string) {
+      if (systemConfigs.roles && systemConfigs.roles.length > 0) {
+        const config = systemConfigs.roles.find((r: any) => r.key === role);
+        return config?.cardColor || 'from-gray-50 to-gray-100';
+      }
+      return 'from-gray-50 to-gray-100'; // 默认颜色
+    }
+
+    // 获取角色对应的文字颜色（动态获取）
+    function getTextColorForRole(role: string) {
+      if (systemConfigs.roles && systemConfigs.roles.length > 0) {
+        const config = systemConfigs.roles.find((r: any) => r.key === role);
+        // 从color字段中提取文字颜色，如 "bg-blue-100 text-blue-700" -> "text-blue-700"
+        if (config?.color) {
+          const colorMatch = config.color.match(/text-[\w-]+/);
+          return colorMatch ? colorMatch[0] : 'text-gray-700';
+        }
+      }
+      return 'text-gray-700'; // 默认颜色
+    }
+
+    const latestUsers = [...allUsers].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
+
+    return (
+      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-8">
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2">管理员仪表盘</h1>
+          <p className="text-gray-500">欢迎回来，{user.name || user.username}</p>
         </div>
-        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:gap-4">
-          <button className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-green-300 text-lg w-full sm:w-auto" onClick={() => router.push("/admin/users")}>用户管理</button>
-          <button className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-yellow-300 text-lg w-full sm:w-auto" onClick={() => router.push("/admin/notices")}>公告管理</button>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg w-full sm:w-auto" onClick={() => router.push("/admin/config")}>系统配置</button>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <div className="rounded-xl p-5 bg-gradient-to-br from-blue-100 to-blue-200 shadow text-center">
-          <div className="text-4xl font-bold text-blue-700">{userCount}</div>
-          <div className="text-gray-600 mt-1">系统用户</div>
-        </div>
-        {/* 动态生成角色统计卡片 */}
-        {Object.entries(roleStats).map(([roleKey, roleData]) => (
-          <div key={roleKey} className={`rounded-xl p-5 shadow text-center bg-gradient-to-br ${roleData.color}`}>
-            <div className={`text-2xl font-bold ${getTextColorForRole(roleKey)}`}>{roleData.count}</div>
-            <div className="text-gray-600 mt-1">{roleData.label}</div>
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+          <div className="rounded-xl p-5 bg-gradient-to-br from-blue-100 to-blue-200 shadow text-center">
+            <div className="text-4xl font-bold text-blue-700">{userCount}</div>
+            <div className="text-gray-600 mt-1">系统用户</div>
           </div>
-        ))}
-        <div className="rounded-xl p-5 bg-gradient-to-br from-blue-100 to-blue-200 shadow text-center">
-          <div className="text-2xl font-bold text-blue-700">{total}</div>
-          <div className="text-gray-600 mt-1">审批单</div>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <div className="rounded-xl p-5 bg-gradient-to-br from-yellow-100 to-yellow-200 shadow text-center">
-          <div className="text-4xl font-bold text-yellow-700">{pending}</div>
-          <div className="text-gray-600 mt-1">待审批</div>
-        </div>
-        <div className="rounded-xl p-5 bg-gradient-to-br from-green-100 to-green-200 shadow text-center">
-          <div className="text-4xl font-bold text-green-700">{approved}</div>
-          <div className="text-gray-600 mt-1">已通过</div>
-        </div>
-        <div className="rounded-xl p-5 bg-gradient-to-br from-red-100 to-red-200 shadow text-center">
-          <div className="text-4xl font-bold text-red-700">{rejected}</div>
-          <div className="text-gray-600 mt-1">已拒绝</div>
-        </div>
-      </div>
-      <div className="mb-10">
-        <h2 className="text-xl font-bold mb-4 text-gray-700">最新注册用户</h2>
-        <ul className="divide-y bg-white rounded-xl shadow">
-          {latestUsers.map(u => (
-            <li key={u.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3">
-              <div>
-                <span className="font-semibold text-blue-700 mr-2">{u.username}</span>
-                <span className="text-gray-700">{u.name || '-'}</span>
-                <span className="ml-2 text-xs text-gray-400">角色：{getRoleLabel(u.role, systemConfigs.roles)}</span>
-              </div>
-              <div className="text-xs text-gray-500 mt-1 sm:mt-0">注册时间：{formatDate(u.created_at)}</div>
-            </li>
+          {/* 动态生成角色统计卡片 */}
+          {Object.entries(roleStats).map(([roleKey, roleData]) => (
+            <div key={roleKey} className={`rounded-xl p-5 shadow text-center bg-gradient-to-br ${roleData.color}`}>
+              <div className={`text-2xl font-bold ${getTextColorForRole(roleKey)}`}>{roleData.count}</div>
+              <div className="text-gray-600 mt-1">{roleData.label}</div>
+            </div>
           ))}
-        </ul>
+          <div className="rounded-xl p-5 bg-gradient-to-br from-blue-100 to-blue-200 shadow text-center">
+            <div className="text-2xl font-bold text-blue-700">{total}</div>
+            <div className="text-gray-600 mt-1">审批单</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+          <div className="rounded-xl p-5 bg-gradient-to-br from-yellow-100 to-yellow-200 shadow text-center">
+            <div className="text-4xl font-bold text-yellow-700">{pending}</div>
+            <div className="text-gray-600 mt-1">待审批</div>
+          </div>
+          <div className="rounded-xl p-5 bg-gradient-to-br from-green-100 to-green-200 shadow text-center">
+            <div className="text-4xl font-bold text-green-700">{approved}</div>
+            <div className="text-gray-600 mt-1">已通过</div>
+          </div>
+          <div className="rounded-xl p-5 bg-gradient-to-br from-red-100 to-red-200 shadow text-center">
+            <div className="text-4xl font-bold text-red-700">{rejected}</div>
+            <div className="text-gray-600 mt-1">已拒绝</div>
+          </div>
+        </div>
+        <div className="mb-10">
+          <h2 className="text-xl font-bold mb-4 text-gray-700">最新注册用户</h2>
+          <ul className="divide-y bg-white rounded-xl shadow">
+            {latestUsers.map(u => (
+              <li key={u.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3">
+                <div>
+                  <span className="font-semibold text-blue-700 mr-2">{u.username}</span>
+                  <span className="text-gray-700">{u.name || '-'}</span>
+                  <span className="ml-2 text-xs text-gray-400">角色：{getRoleLabel(u.role, systemConfigs.roles)}</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-1 sm:mt-0">注册时间：{formatDate(u.created_at)}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-    </div>
-  );
+    );
   }
   // 普通用户/班委仪表盘（统一渲染，按钮区根据 isApprover 控制审批入口）
   // 检查是否有审批权限（从系统配置中动态判断）
@@ -198,10 +191,10 @@ export default function Dashboard() {
   const isApprover = userPermissions.includes('credits.approve') || userPermissions.includes('credits.reject');
   const userApprovals = credits;
   const userTotalScore = (credits || []).filter((c: any) => c.status === 'approved').reduce((sum: number, c: any) => sum + Number(c.score), 0);
-  
+
   // 统计各类型分数（基于实际数据动态计算）
   const typeScoreMap: Record<string, { score: number; label: string; color: string }> = {};
-  
+
   // 从学分数据中动态收集类型统计
   (credits || []).forEach((c: any) => {
     if (c.status === 'approved' && c.type) {
@@ -237,28 +230,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto card mt-12 p-4 sm:p-10 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-primary mb-2">欢迎，{user.name}({user.username})</h1>
-          <div className="text-gray-500 text-base">角色：{getRoleLabel(user.role, systemConfigs.roles)}</div>
-          <div className="text-gray-500 text-base">班级：{user.class || '-'}</div>
-        </div>
-        <div className="flex flex-row gap-4 items-center">
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-blue-300 text-lg"
-            onClick={() => router.push("/credits")}
-          >
-            申请
-          </button>
-          {isApprover && (
-            <button
-              className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-green-300 text-lg"
-              onClick={() => router.push("/admin/credits/overview")}
-            >
-              审批
-            </button>
-          )}
+    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2">我的仪表盘</h1>
+        <div className="flex flex-wrap gap-4 text-gray-500">
+          <span>👤 {user.name}（{user.username}）</span>
+          <span>🏷️ {getRoleLabel(user.role, systemConfigs.roles)}</span>
+          {user.class && <span>📚 {user.class}</span>}
         </div>
       </div>
       {/* 公告区域 */}
@@ -274,7 +252,7 @@ export default function Dashboard() {
               <li key={n.id} className="bg-blue-100 rounded px-3 py-2 text-gray-700 text-sm flex flex-col">
                 <div className="flex justify-between items-start">
                   <span className="font-semibold">{n.title}</span>
-                  <button 
+                  <button
                     onClick={() => setExpandedNotices(prev => ({ ...prev, [n.id]: !prev[n.id] }))}
                     className="text-blue-600 hover:text-blue-800 text-sm ml-2 flex items-center transition-colors duration-200 rounded px-2 py-1 hover:bg-blue-50"
                   >
@@ -292,14 +270,13 @@ export default function Dashboard() {
                   </button>
                 </div>
                 <span className="text-xs text-gray-500">{n.created_at?.slice(0, 10)}</span>
-                <div 
-                  className={`mt-1 overflow-hidden transition-all duration-300 ${
-                    expandedNotices[n.id] ? 'max-h-[500px]' : 'max-h-[5em]'
-                  }`}
+                <div
+                  className={`mt-1 overflow-hidden transition-all duration-300 ${expandedNotices[n.id] ? 'max-h-[500px]' : 'max-h-[5em]'
+                    }`}
                 >
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: n.content }} 
-                    className="prose prose-sm max-w-none overflow-y-auto" 
+                  <div
+                    dangerouslySetInnerHTML={{ __html: n.content }}
+                    className="prose prose-sm max-w-none overflow-y-auto"
                     style={{ maxHeight: expandedNotices[n.id] ? '500px' : 'none' }}
                   />
                 </div>
@@ -346,7 +323,7 @@ export default function Dashboard() {
               const dateStr = date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : '';
               // 解析description
               let desc: any = {};
-              try { desc = c.description ? JSON.parse(c.description) : {}; } catch {}
+              try { desc = c.description ? JSON.parse(c.description) : {}; } catch { }
               return (
                 <tr key={c.id} className="border-t hover:bg-blue-50 transition">
                   <td className="py-2 px-3 align-middle">
@@ -424,7 +401,7 @@ export default function Dashboard() {
         const imageProofs = (detailItem.proofs || []).filter((p: any) => p.mimetype && p.mimetype.startsWith('image/'));
         // 解析description
         let desc: any = {};
-        try { desc = detailItem.description ? JSON.parse(detailItem.description) : {}; } catch {}
+        try { desc = detailItem.description ? JSON.parse(detailItem.description) : {}; } catch { }
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md relative">
@@ -474,7 +451,7 @@ export default function Dashboard() {
                       index={previewIndex}
                       onClose={() => setPreviewIndex(null)}
                       onSwitch={i => setPreviewIndex(i)}
-                      // token 已由 httpOnly cookie 管理，无需传递
+                    // token 已由 httpOnly cookie 管理，无需传递
                     />
                   )}
                 </div>

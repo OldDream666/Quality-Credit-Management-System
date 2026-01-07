@@ -67,20 +67,20 @@ export default function AdminUsersPage() {
     // 首先按角色排序：管理员在前，其他角色在后
     if (a.role === 'admin' && b.role !== 'admin') return -1;
     if (a.role !== 'admin' && b.role === 'admin') return 1;
-    
+
     // 然后按年级排序（降序，高年级在前）
     if (a.grade && b.grade) {
       const gradeA = parseInt(a.grade.replace(/\D/g, '')) || 0;
       const gradeB = parseInt(b.grade.replace(/\D/g, '')) || 0;
       if (gradeA !== gradeB) return gradeB - gradeA;
     }
-    
+
     // 再按专业排序（字母顺序）
     if (a.major && b.major) {
       const majorCompare = a.major.localeCompare(b.major, 'zh-CN');
       if (majorCompare !== 0) return majorCompare;
     }
-    
+
     // 再按班级排序（数字顺序）
     if (a.class && b.class) {
       const classA = parseInt(a.class.replace(/\D/g, '')) || 0;
@@ -89,26 +89,26 @@ export default function AdminUsersPage() {
       // 如果班级数字相同，按完整班级名排序
       return a.class.localeCompare(b.class, 'zh-CN');
     }
-    
+
     // 最后按学号排序（数字顺序）
     if (a.student_id && b.student_id) {
       const studentIdA = parseInt(a.student_id) || 0;
       const studentIdB = parseInt(b.student_id) || 0;
       if (studentIdA !== studentIdB) return studentIdA - studentIdB;
     }
-    
+
     // 如果都相同，按姓名排序
     if (a.name && b.name) {
       return a.name.localeCompare(b.name, 'zh-CN');
     }
-    
+
     return 0;
   });
   // 再声明依赖filteredUsers的变量
   const [detailUser, setDetailUser] = useState<User | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
-  
+
   // 先对全部数据进行分组
   const allGroups = filteredUsers.reduce((acc: Record<string, User[]>, u) => {
     let key = u.class || '未分班';
@@ -141,7 +141,7 @@ export default function AdminUsersPage() {
   const startGroupIndex = (currentPage - 1) * groupsPerPage;
   const endGroupIndex = startGroupIndex + groupsPerPage;
   const currentPageGroups = sortedGroups.slice(startGroupIndex, endGroupIndex);
-  
+
   // 获取当前页的所有用户
   const pagedUsers = currentPageGroups.reduce((acc, [_, users]) => [...acc, ...users], [] as User[]);
 
@@ -182,7 +182,7 @@ export default function AdminUsersPage() {
     if (!window.confirm("确定要删除该用户吗？")) return;
     const res = await fetch(`/api/admin/users/${id}`, {
       method: "DELETE",
-  headers: {},
+      headers: {},
     });
     if (res.ok) {
       setUsers(users => users.filter(u => u.id !== id));
@@ -198,7 +198,7 @@ export default function AdminUsersPage() {
     if (user.role === newRole) return;
     const res = await fetch(`/api/admin/users/${user.id}`, {
       method: "PATCH",
-  headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: newRole })
     });
     if (res.ok) {
@@ -226,7 +226,7 @@ export default function AdminUsersPage() {
     if (!window.confirm(`确定要批量删除选中的 ${selectedIds.length} 个用户吗？`)) return;
     const res = await fetch("/api/admin/users/batch-delete", {
       method: "POST",
-  headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: selectedIds })
     });
     if (res.ok) {
@@ -268,29 +268,24 @@ export default function AdminUsersPage() {
   if (error) return <div className="text-red-600 text-center mt-12">{error}</div>;
 
   return (
-    <div className="users-bg min-h-screen flex justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-2 sm:px-4 py-8">
-      <div className="max-w-6xl w-full bg-white rounded-xl shadow-lg p-4 sm:p-8 relative">
-        <span className="absolute left-4 top-4 text-blue-700 hover:underline hover:text-blue-900 cursor-pointer flex items-center text-base select-none" onClick={() => router.push("/dashboard")} style={{ fontSize: '1rem' }}>
-          <svg className="inline mr-1" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 16L7 10L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          返回
-        </span>
-        <div className="h-12 sm:h-8" />
+    <div className="max-w-6xl mx-auto">
+      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-700">用户管理</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800">用户管理</h1>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <Button 
+            <Button
               onClick={() => router.push("/admin/structure")}
               className="flex-1 sm:flex-none text-center justify-center"
             >
               架构管理
             </Button>
-            <Button 
+            <Button
               onClick={() => router.push("/admin/users/add")}
               className="flex-1 sm:flex-none text-center justify-center"
             >
               添加用户
             </Button>
-            <Button 
+            <Button
               onClick={() => exportUsersToExcel(filteredUsers)}
               className="flex-1 sm:flex-none text-center justify-center"
             >
@@ -304,13 +299,13 @@ export default function AdminUsersPage() {
               <Input placeholder="搜索姓名/用户名/学号..." value={search} onChange={e => setSearch(e.target.value)} className="w-full" />
             </div>
             <div className="min-w-[120px] w-32 flex-shrink-0">
-              <Select value={filterGrade} onChange={v => setFilterGrade(v)} className="w-full" options={[{value:'',label:'全部年级'},...gradeOptions.map(g=>({value:g,label:g}))]} placeholder="全部年级" />
+              <Select value={filterGrade} onChange={v => setFilterGrade(v)} className="w-full" options={[{ value: '', label: '全部年级' }, ...gradeOptions.map(g => ({ value: g, label: g }))]} placeholder="全部年级" />
             </div>
             <div className="min-w-[120px] w-32 flex-shrink-0">
-              <Select value={filterMajor} onChange={v => setFilterMajor(v)} className="w-full" options={[{value:'',label:'全部专业'},...majorOptions.map(m=>({value:m,label:m}))]} placeholder="全部专业" />
+              <Select value={filterMajor} onChange={v => setFilterMajor(v)} className="w-full" options={[{ value: '', label: '全部专业' }, ...majorOptions.map(m => ({ value: m, label: m }))]} placeholder="全部专业" />
             </div>
             <div className="min-w-[120px] w-32 flex-shrink-0">
-              <Select value={filterClass} onChange={v => setFilterClass(v)} className="w-full" options={[{value:'',label:'全部班级'},...classOptions.map(c=>({value:c,label:c}))]} placeholder="全部班级" />
+              <Select value={filterClass} onChange={v => setFilterClass(v)} className="w-full" options={[{ value: '', label: '全部班级' }, ...classOptions.map(c => ({ value: c, label: c }))]} placeholder="全部班级" />
             </div>
             <div className="min-w-[120px] w-32 flex-shrink-0">
               <Select value={filterRole} onChange={v => setFilterRole(v)} className="w-full" options={roleOptions} placeholder="全部角色" />
@@ -322,9 +317,9 @@ export default function AdminUsersPage() {
             <thead className="sticky top-0 z-20 bg-gray-50 shadow-sm">
               <tr>
                 <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">
-                  <input type="checkbox" checked={pagedUsers.length>0 && pagedUsers.every(u=>selectedIds.includes(u.id))} onChange={e=>{
-                    if(e.target.checked) setSelectedIds([...new Set([...selectedIds, ...pagedUsers.map(u=>u.id)])]);
-                    else setSelectedIds(selectedIds.filter(id=>!pagedUsers.map(u=>u.id).includes(id)));
+                  <input type="checkbox" checked={pagedUsers.length > 0 && pagedUsers.every(u => selectedIds.includes(u.id))} onChange={e => {
+                    if (e.target.checked) setSelectedIds([...new Set([...selectedIds, ...pagedUsers.map(u => u.id)])]);
+                    else setSelectedIds(selectedIds.filter(id => !pagedUsers.map(u => u.id).includes(id)));
                   }} />
                 </th>
                 <th className="p-3 font-bold text-gray-700 whitespace-nowrap text-center">用户名</th>
@@ -356,9 +351,9 @@ export default function AdminUsersPage() {
                     ...users.map(u => (
                       <tr key={u.id} className="hover:bg-blue-50 transition border-b border-blue-100">
                         <td className="p-2 align-middle text-center">
-                          <input type="checkbox" checked={selectedIds.includes(u.id)} onChange={e=>{
-                            if(e.target.checked) setSelectedIds([...selectedIds, u.id]);
-                            else setSelectedIds(selectedIds.filter(id=>id!==u.id));
+                          <input type="checkbox" checked={selectedIds.includes(u.id)} onChange={e => {
+                            if (e.target.checked) setSelectedIds([...selectedIds, u.id]);
+                            else setSelectedIds(selectedIds.filter(id => id !== u.id));
                           }} />
                         </td>
                         <td className="p-2 align-middle text-center">{u.username}</td>
@@ -370,11 +365,11 @@ export default function AdminUsersPage() {
                         <td className="p-2 align-middle text-center">{u.grade}</td>
                         <td className="p-2 align-middle text-center">{u.major}</td>
                         <td className="p-2 align-middle text-center">{u.class}</td>
-                        <td className="p-2 align-middle text-center">{u.created_at?.slice(0,10)}</td>
+                        <td className="p-2 align-middle text-center">{u.created_at?.slice(0, 10)}</td>
                         <td className="p-2 align-middle text-center flex flex-wrap gap-1 min-w-[120px] justify-center">
-                          <Button size="sm" onClick={()=>setDetailUser(u)}>详情</Button>
-                          <Button size="sm" onClick={()=>handleResetPassword(u.id)}>重置密码</Button>
-                          <Button size="sm" color="red" onClick={()=>handleDeleteUser(u.id)}>删除</Button>
+                          <Button size="sm" onClick={() => setDetailUser(u)}>详情</Button>
+                          <Button size="sm" onClick={() => handleResetPassword(u.id)}>重置密码</Button>
+                          <Button size="sm" color="red" onClick={() => handleDeleteUser(u.id)}>删除</Button>
                           <Button
                             variant="secondary"
                             size="sm"
@@ -466,19 +461,19 @@ export default function AdminUsersPage() {
           </div>
         </div>
         {/* 详情弹窗 */}
-  <UserDetailModal user={detailUser} onClose={()=>setDetailUser(null)} roleConfigs={systemConfigs.roles} setRoleEditUser={setRoleEditUser} />
+        <UserDetailModal user={detailUser} onClose={() => setDetailUser(null)} roleConfigs={systemConfigs.roles} setRoleEditUser={setRoleEditUser} />
         {/* 角色编辑弹窗 */}
         {roleEditUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-xs relative">
-              <button className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl" onClick={()=>setRoleEditUser(null)}>&times;</button>
+              <button className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-2xl" onClick={() => setRoleEditUser(null)}>&times;</button>
               <h3 className="text-lg font-bold mb-4">修改角色</h3>
-              <select className="w-full border rounded px-3 py-2 mb-4" value={roleEditValue} onChange={e=>setRoleEditValue(e.target.value)}>
+              <select className="w-full border rounded px-3 py-2 mb-4" value={roleEditValue} onChange={e => setRoleEditValue(e.target.value)}>
                 {(systemConfigs.roles || []).map((role: any) => (
                   <option key={role.key} value={role.key}>{role.label}</option>
                 ))}
               </select>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded shadow w-full" onClick={()=>handleUpdateRole(roleEditUser, roleEditValue)}>保存</button>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded shadow w-full" onClick={() => handleUpdateRole(roleEditUser, roleEditValue)}>保存</button>
             </div>
           </div>
         )}
@@ -494,11 +489,11 @@ export default function AdminUsersPage() {
 function RoleTag({ role, onClick, roleConfigs }: { role: string, onClick?: () => void, roleConfigs?: any[] }) {
   const color = getRoleColor(role as any, roleConfigs);
   const label = getRoleLabel(role as any, roleConfigs);
-  
+
   return (
-    <span 
-      className={`inline-block px-2 py-1 rounded text-xs font-bold cursor-pointer ${color}`} 
-      title="点击修改角色" 
+    <span
+      className={`inline-block px-2 py-1 rounded text-xs font-bold cursor-pointer ${color}`}
+      title="点击修改角色"
       onClick={onClick}
     >
       {label}

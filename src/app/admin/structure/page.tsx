@@ -16,13 +16,13 @@ export default function StructurePage() {
   // 专业
   const [majors, setMajors] = useState<any[]>([]);
   const [newMajor, setNewMajor] = useState("");
-  const [editingMajorId, setEditingMajorId] = useState<number|null>(null);
+  const [editingMajorId, setEditingMajorId] = useState<number | null>(null);
   const [editingMajorName, setEditingMajorName] = useState("");
   // 班级
   const [classes, setClasses] = useState<any[]>([]);
   const [newClass, setNewClass] = useState({ name: "", grade_id: "", major_id: "" });
-  const [editingClassId, setEditingClassId] = useState<number|null>(null);
-  const [editingClass, setEditingClass] = useState<{name:string,grade_id:string,major_id:string}>({name:"",grade_id:"",major_id:""});
+  const [editingClassId, setEditingClassId] = useState<number | null>(null);
+  const [editingClass, setEditingClass] = useState<{ name: string, grade_id: string, major_id: string }>({ name: "", grade_id: "", major_id: "" });
 
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -30,14 +30,14 @@ export default function StructurePage() {
 
   const [tab, setTab] = useState('info');
 
-  const [gradeSort, setGradeSort] = useState<{field: string, asc: boolean}>({field: 'name', asc: true});
-  const [majorSort, setMajorSort] = useState<{field: string, asc: boolean}>({field: 'name', asc: true});
-  const [classSort, setClassSort] = useState<{field: string, asc: boolean}>({field: 'name', asc: true});
+  const [gradeSort, setGradeSort] = useState<{ field: string, asc: boolean }>({ field: 'name', asc: true });
+  const [majorSort, setMajorSort] = useState<{ field: string, asc: boolean }>({ field: 'name', asc: true });
+  const [classSort, setClassSort] = useState<{ field: string, asc: boolean }>({ field: 'name', asc: true });
 
   const [showImport, setShowImport] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importFile, setImportFile] = useState<File|null>(null);
-  const [importResult, setImportResult] = useState<any[]|null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importResult, setImportResult] = useState<any[] | null>(null);
 
   // 加载全部数据
   useEffect(() => {
@@ -66,8 +66,8 @@ export default function StructurePage() {
   useEffect(() => {
     async function fetchUsers() {
       setUsersLoading(true);
-  // token 已由 httpOnly cookie 管理，无需传递
-  const res = await fetch("/api/users");
+      // token 已由 httpOnly cookie 管理，无需传递
+      const res = await fetch("/api/users");
       const data = await res.json();
       if (res.ok) setAllUsers(data.users);
       setUsersLoading(false);
@@ -162,9 +162,9 @@ export default function StructurePage() {
       toast.error(data.error || '删除专业失败');
     }
   }
-  function startEditMajor(m:any){ setEditingMajorId(m.id); setEditingMajorName(m.name); }
-  function cancelEditMajor(){ setEditingMajorId(null); setEditingMajorName(""); }
-  async function saveEditMajor(){ if(!editingMajorName.trim()||editingMajorId==null)return; await fetch("/api/structure/majors",{method:"PUT",body:JSON.stringify({id:editingMajorId,name:editingMajorName}),headers:{"Content-Type":"application/json"}}); setEditingMajorId(null); setEditingMajorName(""); fetchMajors(); fetchClasses(); }
+  function startEditMajor(m: any) { setEditingMajorId(m.id); setEditingMajorName(m.name); }
+  function cancelEditMajor() { setEditingMajorId(null); setEditingMajorName(""); }
+  async function saveEditMajor() { if (!editingMajorName.trim() || editingMajorId == null) return; await fetch("/api/structure/majors", { method: "PUT", body: JSON.stringify({ id: editingMajorId, name: editingMajorName }), headers: { "Content-Type": "application/json" } }); setEditingMajorId(null); setEditingMajorName(""); fetchMajors(); fetchClasses(); }
 
   // 班级操作
   async function addClass() {
@@ -190,9 +190,9 @@ export default function StructurePage() {
       toast.error(data.error || '删除班级失败');
     }
   }
-  function startEditClass(cls:any){ setEditingClassId(cls.id); setEditingClass({name:cls.name,grade_id:String(cls.grade_id),major_id:String(cls.major_id)}); }
-  function cancelEditClass(){ setEditingClassId(null); setEditingClass({name:"",grade_id:"",major_id:""}); }
-  async function saveEditClass(){ if(!editingClass.name.trim()||!editingClass.grade_id||!editingClass.major_id||editingClassId==null)return; await fetch("/api/structure/classes",{method:"PUT",body:JSON.stringify({id:editingClassId,name:editingClass.name,grade_id:editingClass.grade_id,major_id:editingClass.major_id}),headers:{"Content-Type":"application/json"}}); setEditingClassId(null); setEditingClass({name:"",grade_id:"",major_id:""}); fetchClasses(); }
+  function startEditClass(cls: any) { setEditingClassId(cls.id); setEditingClass({ name: cls.name, grade_id: String(cls.grade_id), major_id: String(cls.major_id) }); }
+  function cancelEditClass() { setEditingClassId(null); setEditingClass({ name: "", grade_id: "", major_id: "" }); }
+  async function saveEditClass() { if (!editingClass.name.trim() || !editingClass.grade_id || !editingClass.major_id || editingClassId == null) return; await fetch("/api/structure/classes", { method: "PUT", body: JSON.stringify({ id: editingClassId, name: editingClass.name, grade_id: editingClass.grade_id, major_id: editingClass.major_id }), headers: { "Content-Type": "application/json" } }); setEditingClassId(null); setEditingClass({ name: "", grade_id: "", major_id: "" }); fetchClasses(); }
 
   // 组合所有班级的扁平数据
   const classTableData = useMemo(() => {
@@ -243,18 +243,18 @@ export default function StructurePage() {
     }));
   }, [grades, majors, classes]);
 
-  const [expanded, setExpanded] = useState<{[key:string]:boolean}>({});
-  const toggleExpand = (key:string) => setExpanded(e => ({...e, [key]:!e[key]}));
+  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
+  const toggleExpand = (key: string) => setExpanded(e => ({ ...e, [key]: !e[key] }));
 
-  function handleImportFile(e:any){ setImportFile(e.target.files[0]||null); }
-  async function handleImportSubmit(){
-    if(!importFile){toast.error('请先选择文件');return;}
+  function handleImportFile(e: any) { setImportFile(e.target.files[0] || null); }
+  async function handleImportSubmit() {
+    if (!importFile) { toast.error('请先选择文件'); return; }
     setImporting(true); setImportResult(null);
     const formData = new FormData(); formData.append('file', importFile);
     const res = await fetch('/api/structure/import', { method: 'POST', body: formData });
     const data = await res.json();
-    setImporting(false); setImportResult(data.results||[{success:false,message:data.error||'导入失败'}]);
-    if(res.ok){
+    setImporting(false); setImportResult(data.results || [{ success: false, message: data.error || '导入失败' }]);
+    if (res.ok) {
       toast.success('导入完成');
       fetchGrades(); fetchMajors(); fetchClasses();
     } else {
@@ -263,20 +263,11 @@ export default function StructurePage() {
   }
 
   return (
-    <div className="min-h-screen flex justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-0 py-8">
-      <div className="w-[80vw] max-w-[1500px] bg-white rounded-xl shadow-lg p-8 flex gap-12 relative overflow-x-auto">
-        {/* 返回按钮 */}
-        <div className="absolute left-6 top-6 z-10">
-          <span className="text-blue-700 hover:underline hover:text-blue-900 cursor-pointer flex items-center text-base select-none" onClick={() => router.push('/admin/users')}>
-            <svg className="inline mr-1" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 16L7 10L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            返回
-          </span>
-        </div>
+    <div className="w-full">
+      <div className="bg-white rounded-xl shadow-lg p-6 flex gap-8 overflow-x-auto">
         {/* 左侧树形结构 */}
-        <div className="w-72 min-w-[200px] border-r pr-8">
-          <div style={{ height: 24 }} />
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-blue-700">组织架构</h2>
-          <div style={{ height: 24 }} />
+        <div className="w-64 min-w-[200px] border-r pr-6 flex-shrink-0">
+          <h2 className="text-2xl font-extrabold text-gray-800 mb-4">组织架构</h2>
           <TreeView treeData={buildTree()} expanded={expanded} toggleExpand={toggleExpand} onSelect={setSelectedNode} selectedNode={selectedNode} />
         </div>
         {/* 右侧内容区 */}
@@ -284,12 +275,12 @@ export default function StructurePage() {
           {/* 标签栏 */}
           <div className="flex gap-8 border-b mb-6">
             <button
-              className={`px-6 py-2 text-lg font-bold border-b-2 transition-all ${tab==='info' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-blue-600'}`}
-              onClick={()=>setTab('info')}
+              className={`px-6 py-2 text-lg font-bold border-b-2 transition-all ${tab === 'info' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-blue-600'}`}
+              onClick={() => setTab('info')}
             >架构信息</button>
             <button
-              className={`px-6 py-2 text-lg font-bold border-b-2 transition-all ${tab==='unit' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-blue-600'}`}
-              onClick={()=>setTab('unit')}
+              className={`px-6 py-2 text-lg font-bold border-b-2 transition-all ${tab === 'unit' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-blue-600'}`}
+              onClick={() => setTab('unit')}
             >架构单元</button>
           </div>
           {/* 标签内容 */}
@@ -313,45 +304,45 @@ export default function StructurePage() {
           {tab === 'unit' && (
             <>
               <div className="flex items-center mb-4 gap-4">
-                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow" onClick={()=>setShowImport(true)}>批量导入</button>
+                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow" onClick={() => setShowImport(true)}>批量导入</button>
                 <a href="/架构导入模板.xlsx" className="text-blue-600 underline" download>下载模板</a>
               </div>
               {showImport && (
                 <div className="mb-6 p-4 bg-gray-50 rounded border flex flex-col gap-2">
                   <input type="file" accept=".xlsx" onChange={handleImportFile} />
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded w-32" onClick={handleImportSubmit} disabled={importing}>{importing?'导入中...':'开始导入'}</button>
-                  {importResult && <div className="mt-2 text-sm">{importResult.map((r,i)=>(<div key={i} className={r.success?"text-green-600":"text-red-600"}>{r.message}</div>))}</div>}
-                  <button className="text-gray-500 underline mt-2 w-20" onClick={()=>setShowImport(false)}>关闭</button>
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded w-32" onClick={handleImportSubmit} disabled={importing}>{importing ? '导入中...' : '开始导入'}</button>
+                  {importResult && <div className="mt-2 text-sm">{importResult.map((r, i) => (<div key={i} className={r.success ? "text-green-600" : "text-red-600"}>{r.message}</div>))}</div>}
+                  <button className="text-gray-500 underline mt-2 w-20" onClick={() => setShowImport(false)}>关闭</button>
                 </div>
               )}
               {/* 功能区卡片 */}
-              <div className="bg-white rounded-xl shadow border p-6 mb-8 min-w-[900px] min-h-[700px] flex" style={{overflowX:'auto'}}>
+              <div className="bg-white rounded-xl shadow border p-6 mb-8 min-w-[900px] min-h-[700px] flex" style={{ overflowX: 'auto' }}>
                 {/* 年级管理 */}
                 <div className="md:pr-6 md:border-r flex flex-col items-start h-full min-h-0 flex-1">
                   <div className="text-xl font-extrabold mb-4 text-gray-800">年级管理</div>
                   <div className="space-y-3 w-full">
-                    <Input value={newGrade} onChange={e=>setNewGrade(e.target.value)} placeholder="新增年级，如2024级" className="w-full" />
+                    <Input value={newGrade} onChange={e => setNewGrade(e.target.value)} placeholder="新增年级，如2024级" className="w-full" />
                     <Button onClick={addGrade} className="w-full">添加</Button>
                     <div className="mt-2 flex-1 min-h-0 overflow-y-auto w-full pr-2">
                       <table className="min-w-full text-base text-left border bg-white rounded-xl overflow-hidden">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={()=>setGradeSort(s=>({field:'name',asc:s.field==='name'?!s.asc:true}))}>
-                              年级名称 {gradeSort.field==='name' && (gradeSort.asc ? '▲' : '▼')}
+                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={() => setGradeSort(s => ({ field: 'name', asc: s.field === 'name' ? !s.asc : true }))}>
+                              年级名称 {gradeSort.field === 'name' && (gradeSort.asc ? '▲' : '▼')}
                             </th>
                             <th className="px-4 py-2 font-bold text-gray-700 text-right">操作</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {[...grades].sort((a,b)=>{
-                            if(gradeSort.asc) return a.name.localeCompare(b.name,'zh-CN');
-                            else return b.name.localeCompare(a.name,'zh-CN');
-                          }).map(g=>(
+                          {[...grades].sort((a, b) => {
+                            if (gradeSort.asc) return a.name.localeCompare(b.name, 'zh-CN');
+                            else return b.name.localeCompare(a.name, 'zh-CN');
+                          }).map(g => (
                             <tr key={g.id} className="border-b last:border-b-0">
-                              {editingGradeId===g.id ? (
+                              {editingGradeId === g.id ? (
                                 <>
                                   <td className="px-4 py-2 whitespace-nowrap">
-                                    <Input value={editingGradeName} onChange={e=>setEditingGradeName(e.target.value)} className="w-32" autoFocus onKeyDown={e=>{if(e.key==='Enter')saveEditGrade();if(e.key==='Escape')cancelEditGrade();}} />
+                                    <Input value={editingGradeName} onChange={e => setEditingGradeName(e.target.value)} className="w-32" autoFocus onKeyDown={e => { if (e.key === 'Enter') saveEditGrade(); if (e.key === 'Escape') cancelEditGrade(); }} />
                                   </td>
                                   <td className="px-4 py-2 whitespace-nowrap text-right space-x-2">
                                     <button className="text-blue-600 hover:underline" onClick={saveEditGrade}>保存</button>
@@ -362,8 +353,8 @@ export default function StructurePage() {
                                 <>
                                   <td className="px-4 py-2 whitespace-nowrap">{g.name}</td>
                                   <td className="px-4 py-2 whitespace-nowrap text-right space-x-2">
-                                    <button className="text-blue-600 hover:underline" onClick={()=>startEditGrade(g)}>编辑</button>
-                                    <button className="text-red-500 hover:underline" onClick={()=>deleteGrade(g.id)}>删除</button>
+                                    <button className="text-blue-600 hover:underline" onClick={() => startEditGrade(g)}>编辑</button>
+                                    <button className="text-red-500 hover:underline" onClick={() => deleteGrade(g.id)}>删除</button>
                                   </td>
                                 </>
                               )}
@@ -378,28 +369,28 @@ export default function StructurePage() {
                 <div className="md:px-6 md:border-r flex flex-col items-start h-full min-h-0 flex-1">
                   <div className="text-xl font-extrabold mb-4 text-gray-800">专业管理</div>
                   <div className="space-y-3 w-full">
-                    <Input value={newMajor} onChange={e=>setNewMajor(e.target.value)} placeholder="新增专业，如计算机" className="w-full" />
+                    <Input value={newMajor} onChange={e => setNewMajor(e.target.value)} placeholder="新增专业，如计算机" className="w-full" />
                     <Button onClick={addMajor} className="w-full">添加</Button>
                     <div className="mt-2 flex-1 min-h-0 overflow-y-auto w-full pr-2">
                       <table className="min-w-full text-base text-left border bg-white rounded-xl overflow-hidden">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={()=>setMajorSort(s=>({field:'name',asc:s.field==='name'?!s.asc:true}))}>
-                              专业名称 {majorSort.field==='name' && (majorSort.asc ? '▲' : '▼')}
+                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={() => setMajorSort(s => ({ field: 'name', asc: s.field === 'name' ? !s.asc : true }))}>
+                              专业名称 {majorSort.field === 'name' && (majorSort.asc ? '▲' : '▼')}
                             </th>
                             <th className="px-4 py-2 font-bold text-gray-700 text-right">操作</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {[...majors].sort((a,b)=>{
-                            if(majorSort.asc) return a.name.localeCompare(b.name,'zh-CN');
-                            else return b.name.localeCompare(a.name,'zh-CN');
-                          }).map(m=>(
+                          {[...majors].sort((a, b) => {
+                            if (majorSort.asc) return a.name.localeCompare(b.name, 'zh-CN');
+                            else return b.name.localeCompare(a.name, 'zh-CN');
+                          }).map(m => (
                             <tr key={m.id} className="border-b last:border-b-0">
-                              {editingMajorId===m.id ? (
+                              {editingMajorId === m.id ? (
                                 <>
                                   <td className="px-4 py-2 whitespace-nowrap">
-                                    <Input value={editingMajorName} onChange={e=>setEditingMajorName(e.target.value)} className="w-32" autoFocus onKeyDown={e=>{if(e.key==='Enter')saveEditMajor();if(e.key==='Escape')cancelEditMajor();}} />
+                                    <Input value={editingMajorName} onChange={e => setEditingMajorName(e.target.value)} className="w-32" autoFocus onKeyDown={e => { if (e.key === 'Enter') saveEditMajor(); if (e.key === 'Escape') cancelEditMajor(); }} />
                                   </td>
                                   <td className="px-4 py-2 whitespace-nowrap text-right space-x-2">
                                     <button className="text-blue-600 hover:underline" onClick={saveEditMajor}>保存</button>
@@ -410,8 +401,8 @@ export default function StructurePage() {
                                 <>
                                   <td className="px-4 py-2 whitespace-nowrap">{m.name}</td>
                                   <td className="px-4 py-2 whitespace-nowrap text-right space-x-2">
-                                    <button className="text-blue-600 hover:underline" onClick={()=>startEditMajor(m)}>编辑</button>
-                                    <button className="text-red-500 hover:underline" onClick={()=>deleteMajor(m.id)}>删除</button>
+                                    <button className="text-blue-600 hover:underline" onClick={() => startEditMajor(m)}>编辑</button>
+                                    <button className="text-red-500 hover:underline" onClick={() => deleteMajor(m.id)}>删除</button>
                                   </td>
                                 </>
                               )}
@@ -426,64 +417,64 @@ export default function StructurePage() {
                 <div className="md:pl-6 flex flex-col items-start h-full min-h-0 flex-1">
                   <div className="text-xl font-extrabold mb-4 text-gray-800">班级管理</div>
                   <div className="space-y-3 w-full">
-                    <Input value={newClass.name} onChange={e=>setNewClass(c=>({...c,name:e.target.value}))} placeholder="班级名，如1班" className="w-full" />
-                    <select className="w-full border rounded px-3 py-2" value={newClass.grade_id} onChange={e=>setNewClass(c=>({...c,grade_id:e.target.value}))}>
+                    <Input value={newClass.name} onChange={e => setNewClass(c => ({ ...c, name: e.target.value }))} placeholder="班级名，如1班" className="w-full" />
+                    <select className="w-full border rounded px-3 py-2" value={newClass.grade_id} onChange={e => setNewClass(c => ({ ...c, grade_id: e.target.value }))}>
                       <option value="">选择年级</option>
-                      {grades.map(g=>(<option key={g.id} value={g.id}>{g.name}</option>))}
+                      {grades.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
                     </select>
-                    <select className="w-full border rounded px-3 py-2" value={newClass.major_id} onChange={e=>setNewClass(c=>({...c,major_id:e.target.value}))}>
+                    <select className="w-full border rounded px-3 py-2" value={newClass.major_id} onChange={e => setNewClass(c => ({ ...c, major_id: e.target.value }))}>
                       <option value="">选择专业</option>
-                      {majors.map(m=>(<option key={m.id} value={m.id}>{m.name}</option>))}
+                      {majors.map(m => (<option key={m.id} value={m.id}>{m.name}</option>))}
                     </select>
                     <Button onClick={addClass} className="w-full">添加</Button>
                     <div className="mt-2 flex-1 min-h-0 overflow-y-auto w-full pr-2">
                       <table className="min-w-full text-base text-left border bg-white rounded-xl overflow-hidden">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={()=>setClassSort(s=>({field:'name',asc:s.field==='name'?!s.asc:true}))}>
-                              班级名称 {classSort.field==='name' && (classSort.asc ? '▲' : '▼')}
+                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={() => setClassSort(s => ({ field: 'name', asc: s.field === 'name' ? !s.asc : true }))}>
+                              班级名称 {classSort.field === 'name' && (classSort.asc ? '▲' : '▼')}
                             </th>
-                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={()=>setClassSort(s=>({field:'grade',asc:s.field==='grade'?!s.asc:true}))}>
-                              年级 {classSort.field==='grade' && (classSort.asc ? '▲' : '▼')}
+                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={() => setClassSort(s => ({ field: 'grade', asc: s.field === 'grade' ? !s.asc : true }))}>
+                              年级 {classSort.field === 'grade' && (classSort.asc ? '▲' : '▼')}
                             </th>
-                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={()=>setClassSort(s=>({field:'major',asc:s.field==='major'?!s.asc:true}))}>
-                              专业 {classSort.field==='major' && (classSort.asc ? '▲' : '▼')}
+                            <th className="px-4 py-2 font-bold text-gray-700 cursor-pointer select-none" onClick={() => setClassSort(s => ({ field: 'major', asc: s.field === 'major' ? !s.asc : true }))}>
+                              专业 {classSort.field === 'major' && (classSort.asc ? '▲' : '▼')}
                             </th>
                             <th className="px-4 py-2 font-bold text-gray-700 text-right">操作</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {[...classes].sort((a,b)=>{
+                          {[...classes].sort((a, b) => {
                             let av, bv;
-                            if(classSort.field==='name'){ av=a.name; bv=b.name; }
-                            else if(classSort.field==='grade'){
-                              av=grades.find(g=>g.id===a.grade_id)?.name||'';
-                              bv=grades.find(g=>g.id===b.grade_id)?.name||'';
-                            }else if(classSort.field==='major'){
-                              av=majors.find(m=>m.id===a.major_id)?.name||'';
-                              bv=majors.find(m=>m.id===b.major_id)?.name||'';
+                            if (classSort.field === 'name') { av = a.name; bv = b.name; }
+                            else if (classSort.field === 'grade') {
+                              av = grades.find(g => g.id === a.grade_id)?.name || '';
+                              bv = grades.find(g => g.id === b.grade_id)?.name || '';
+                            } else if (classSort.field === 'major') {
+                              av = majors.find(m => m.id === a.major_id)?.name || '';
+                              bv = majors.find(m => m.id === b.major_id)?.name || '';
                             }
-                            if(classSort.asc) return String(av).localeCompare(String(bv),'zh-CN');
-                            else return String(bv).localeCompare(String(av),'zh-CN');
-                          }).map(cls=>{
-                            const grade = grades.find(g=>g.id===cls.grade_id);
-                            const major = majors.find(m=>m.id===cls.major_id);
-                            if(editingClassId===cls.id){
+                            if (classSort.asc) return String(av).localeCompare(String(bv), 'zh-CN');
+                            else return String(bv).localeCompare(String(av), 'zh-CN');
+                          }).map(cls => {
+                            const grade = grades.find(g => g.id === cls.grade_id);
+                            const major = majors.find(m => m.id === cls.major_id);
+                            if (editingClassId === cls.id) {
                               return (
                                 <tr key={cls.id} className="border-b last:border-b-0">
                                   <td className="px-4 py-2 whitespace-nowrap">
-                                    <Input value={editingClass.name} onChange={e=>setEditingClass(c=>({...c,name:e.target.value}))} className="w-24" autoFocus onKeyDown={e=>{if(e.key==='Enter')saveEditClass();if(e.key==='Escape')cancelEditClass();}} />
+                                    <Input value={editingClass.name} onChange={e => setEditingClass(c => ({ ...c, name: e.target.value }))} className="w-24" autoFocus onKeyDown={e => { if (e.key === 'Enter') saveEditClass(); if (e.key === 'Escape') cancelEditClass(); }} />
                                   </td>
                                   <td className="px-4 py-2 whitespace-nowrap">
-                                    <select className="border rounded px-2 py-1" value={editingClass.grade_id} onChange={e=>setEditingClass(c=>({...c,grade_id:e.target.value}))}>
+                                    <select className="border rounded px-2 py-1" value={editingClass.grade_id} onChange={e => setEditingClass(c => ({ ...c, grade_id: e.target.value }))}>
                                       <option value="">选择年级</option>
-                                      {grades.map(g=>(<option key={g.id} value={g.id}>{g.name}</option>))}
+                                      {grades.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
                                     </select>
                                   </td>
                                   <td className="px-4 py-2 whitespace-nowrap">
-                                    <select className="border rounded px-2 py-1" value={editingClass.major_id} onChange={e=>setEditingClass(c=>({...c,major_id:e.target.value}))}>
+                                    <select className="border rounded px-2 py-1" value={editingClass.major_id} onChange={e => setEditingClass(c => ({ ...c, major_id: e.target.value }))}>
                                       <option value="">选择专业</option>
-                                      {majors.map(m=>(<option key={m.id} value={m.id}>{m.name}</option>))}
+                                      {majors.map(m => (<option key={m.id} value={m.id}>{m.name}</option>))}
                                     </select>
                                   </td>
                                   <td className="px-4 py-2 whitespace-nowrap text-right space-x-2">
@@ -496,11 +487,11 @@ export default function StructurePage() {
                             return (
                               <tr key={cls.id} className="border-b last:border-b-0">
                                 <td className="px-4 py-2 whitespace-nowrap">{cls.name}</td>
-                                <td className="px-4 py-2 whitespace-nowrap">{grade?.name||'-'}</td>
-                                <td className="px-4 py-2 whitespace-nowrap">{major?.name||'-'}</td>
+                                <td className="px-4 py-2 whitespace-nowrap">{grade?.name || '-'}</td>
+                                <td className="px-4 py-2 whitespace-nowrap">{major?.name || '-'}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-right space-x-2">
-                                  <button className="text-blue-600 hover:underline" onClick={()=>startEditClass(cls)}>编辑</button>
-                                  <button className="text-red-500 hover:underline" onClick={()=>deleteClass(cls.id)}>删除</button>
+                                  <button className="text-blue-600 hover:underline" onClick={() => startEditClass(cls)}>编辑</button>
+                                  <button className="text-red-500 hover:underline" onClick={() => deleteClass(cls.id)}>删除</button>
                                 </td>
                               </tr>
                             );
@@ -520,9 +511,9 @@ export default function StructurePage() {
 }
 
 // 递归树组件，SVG美化三角
-function TreeView({treeData, expanded, toggleExpand, onSelect, selectedNode, path=[]}:{treeData:any[], expanded:any, toggleExpand:(key:string)=>void, onSelect:(node:any)=>void, selectedNode:any, path?:string[]}) {
+function TreeView({ treeData, expanded, toggleExpand, onSelect, selectedNode, path = [] }: { treeData: any[], expanded: any, toggleExpand: (key: string) => void, onSelect: (node: any) => void, selectedNode: any, path?: string[] }) {
   // 生成唯一key
-  function getNodeKey(node:any, path:string[]) {
+  function getNodeKey(node: any, path: string[]) {
     return node.type + '-' + node.id + '-' + path.join('>');
   }
   if (!treeData || treeData.length === 0) return <div className="text-gray-400 text-sm py-2">暂无数据</div>;
@@ -541,17 +532,17 @@ function TreeView({treeData, expanded, toggleExpand, onSelect, selectedNode, pat
         return (
           <li key={nodeKey} className="mb-1">
             <div className={`flex items-center gap-1 group cursor-pointer hover:bg-blue-50 rounded px-1 py-0.5 ${isSelected ? 'bg-blue-100' : ''}`}
-              onClick={()=>{
-                if(node.type==='grade') onSelect({type:'grade',id:node.id,gradeName:node.name});
-                if(node.type==='major') onSelect({type:'major',id:node.id,gradeName:currentPath[0],majorName:node.name});
-                if(node.type==='class') onSelect({type:'class',id:node.id,gradeName:currentPath[0],majorName:currentPath[1],className:node.name});
+              onClick={() => {
+                if (node.type === 'grade') onSelect({ type: 'grade', id: node.id, gradeName: node.name });
+                if (node.type === 'major') onSelect({ type: 'major', id: node.id, gradeName: currentPath[0], majorName: node.name });
+                if (node.type === 'class') onSelect({ type: 'class', id: node.id, gradeName: currentPath[0], majorName: currentPath[1], className: node.name });
               }}>
               {node.children && node.children.length > 0 && (
-                <span onClick={e=>{e.stopPropagation();toggleExpand(nodeKey);}} className="w-5 h-5 flex items-center justify-center text-gray-400 select-none">
+                <span onClick={e => { e.stopPropagation(); toggleExpand(nodeKey); }} className="w-5 h-5 flex items-center justify-center text-gray-400 select-none">
                   {expanded[nodeKey] ? (
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M8 6l4 4-4 4" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M8 6l4 4-4 4" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   )}
                 </span>
               )}
@@ -581,7 +572,7 @@ function RoleTag({ role }: { role: string }) {
 }
 
 // 用户表格组件
-function UserTable({users}:{users:any[]}) {
+function UserTable({ users }: { users: any[] }) {
   if (!users || users.length === 0) return <div className="text-gray-400 text-center py-8">暂无用户</div>;
   return (
     <div className="overflow-x-auto">

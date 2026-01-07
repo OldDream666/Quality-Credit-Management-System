@@ -8,7 +8,7 @@ export default function AdminNotices() {
   const [notices, setNotices] = useState<any[]>([]);
   // token 已由 httpOnly cookie 管理，无需传递
   const [user, setUser] = useState<any>(null);
-  const [editId, setEditId] = useState<number|null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,15 +18,15 @@ export default function AdminNotices() {
   const router = useRouter();
 
   useEffect(() => {
-  // token 已由 httpOnly cookie 管理，无需传递
-  if (false) {
+    // token 已由 httpOnly cookie 管理，无需传递
+    if (false) {
       setError("请先登录");
       setCheckingAuth(false);
       setTimeout(() => router.replace("/login"), 1500);
       return;
     }
-  // token 已由 httpOnly cookie 管理，无需传递
-  fetch("/api/auth/me")
+    // token 已由 httpOnly cookie 管理，无需传递
+    fetch("/api/auth/me")
       .then(res => res.json())
       .then(data => {
         if (!data.user) {
@@ -64,7 +64,7 @@ export default function AdminNotices() {
       .then(data => setNotices(data.notices || []));
   }
 
-  async function handleSubmit(e:any) {
+  async function handleSubmit(e: any) {
     e.preventDefault();
     if (!content.trim()) {
       alert("请输入公告内容");
@@ -77,29 +77,29 @@ export default function AdminNotices() {
       method,
       headers: {
         "Content-Type": "application/json",
-  // token 已由 httpOnly cookie 管理，无需传递
+        // token 已由 httpOnly cookie 管理，无需传递
       },
       body: JSON.stringify({ title, content }),
     });
-    setTitle(""); 
+    setTitle("");
     setContent("");
-    setEditId(null); 
+    setEditId(null);
     setLoading(false);
     fetchNotices();
   }
 
-  async function handleEdit(n:any) {
-    setEditId(n.id); 
+  async function handleEdit(n: any) {
+    setEditId(n.id);
     setTitle(n.title);
     setContent(n.content);
   }
 
-  async function handleDelete(id:number) {
+  async function handleDelete(id: number) {
     if (!window.confirm("确定要删除该公告吗？")) return;
     try {
       const res = await fetch(`/api/notices/${id}`, {
         method: "DELETE",
-  headers: {},
+        headers: {},
       });
       if (!res.ok) {
         throw new Error("删除失败");
@@ -114,41 +114,32 @@ export default function AdminNotices() {
   if (error) return <div className="text-center mt-12 text-red-600">{error}</div>;
 
   return (
-    <div className="max-w-5xl mx-auto card mt-10 p-4 sm:p-10 bg-white rounded-2xl shadow-xl relative">
-      <span
-        className="absolute left-4 top-4 text-blue-700 hover:underline hover:text-blue-900 cursor-pointer flex items-center text-base select-none"
-        style={{ fontSize: '1rem' }}
-        onClick={() => router.push("/dashboard")}
-      >
-        <svg className="inline mr-1" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 16L7 10L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        返回
-      </span>
-      <div style={{ height: 12 }} />
-      <h1 className="text-2xl sm:text-3xl font-extrabold mb-8 text-blue-700">公告管理</h1>
+    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-8">
+      <h1 className="text-2xl sm:text-3xl font-extrabold mb-6 text-gray-800">公告管理</h1>
       <form onSubmit={handleSubmit} className="mb-8 space-y-4">
-        <input 
-          className="w-full border rounded-lg px-4 py-3 text-base sm:text-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors duration-200" 
-          placeholder="公告标题" 
-          value={title} 
-          onChange={e=>setTitle(e.target.value)} 
-          required 
+        <input
+          className="w-full border rounded-lg px-4 py-3 text-base sm:text-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors duration-200"
+          placeholder="公告标题"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          required
         />
         <div className="min-h-[500px] border rounded-lg overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors duration-200">
           <RichTextEditor content={content} onChange={setContent} />
         </div>
         <div className="flex gap-3 mt-6">
-          <button 
-            type="submit" 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg shadow text-base sm:text-lg transition-colors duration-200 font-medium" 
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg shadow text-base sm:text-lg transition-colors duration-200 font-medium"
             disabled={loading}
           >
             {editId ? "保存修改" : "发布公告"}
           </button>
           {editId && (
-            <button 
-              type="button" 
-              className="px-5 py-2.5 rounded-lg border hover:bg-gray-50 text-base sm:text-lg transition-colors duration-200" 
-              onClick={()=>{setEditId(null);setTitle("");setContent("");}}
+            <button
+              type="button"
+              className="px-5 py-2.5 rounded-lg border hover:bg-gray-50 text-base sm:text-lg transition-colors duration-200"
+              onClick={() => { setEditId(null); setTitle(""); setContent(""); }}
             >
               取消
             </button>
@@ -156,29 +147,29 @@ export default function AdminNotices() {
         </div>
       </form>
       <ul className="divide-y">
-        {notices.map(n=>(
+        {notices.map(n => (
           <li key={n.id} className="py-6">
             <div className="flex justify-between items-start gap-4">
               <div className="flex-1">
                 <div className="font-semibold text-xl text-gray-800">{n.title}</div>
-                <div className="text-gray-500 text-sm mt-1">{n.created_at?.slice(0,10)}</div>
+                <div className="text-gray-500 text-sm mt-1">{n.created_at?.slice(0, 10)}</div>
               </div>
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={() => handleEdit(n)}
                   className="flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
                 >
                   <PencilSquareIcon className="w-4 h-4" />
                   <span>编辑</span>
                 </button>
-                <button 
+                <button
                   onClick={() => handleDelete(n.id)}
                   className="flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
                 >
                   <TrashIcon className="w-4 h-4" />
                   <span>删除</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setExpandedNotices(prev => ({ ...prev, [n.id]: !prev[n.id] }))}
                   className="flex items-center gap-1 px-3 py-1.5 text-gray-600 hover:bg-gray-50 rounded transition-colors duration-200 ml-2"
                 >
@@ -196,15 +187,14 @@ export default function AdminNotices() {
                 </button>
               </div>
             </div>
-            <div 
-              className={`mt-4 overflow-hidden transition-all duration-300 ${
-                expandedNotices[n.id] ? 'max-h-[800px]' : 'max-h-[3em]'
-              }`}
+            <div
+              className={`mt-4 overflow-hidden transition-all duration-300 ${expandedNotices[n.id] ? 'max-h-[800px]' : 'max-h-[3em]'
+                }`}
             >
-              <div 
-                className="prose prose-lg max-w-none overflow-y-auto" 
+              <div
+                className="prose prose-lg max-w-none overflow-y-auto"
                 style={{ maxHeight: expandedNotices[n.id] ? '800px' : 'none' }}
-                dangerouslySetInnerHTML={{ __html: n.content }} 
+                dangerouslySetInnerHTML={{ __html: n.content }}
               />
             </div>
           </li>
