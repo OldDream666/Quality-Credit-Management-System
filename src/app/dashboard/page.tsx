@@ -431,7 +431,7 @@ export default function Dashboard() {
                           <li key={idx} style={{ cursor: 'pointer', display: 'inline-block', marginRight: 8 }} onClick={() => setPreviewIndex(imgIdx)}>
                             {/* 缩略图容器：使用 max 宽高约束，图片保持原始纵横比 */}
                             <span style={{ maxWidth: 120, maxHeight: 120, borderRadius: 4, display: 'inline-block', overflow: 'hidden', background: '#f3f4f6' }}>
-                              <AuthImage src={p.url} alt={p.name || `材料${idx + 1}`} style={{ maxWidth: 120, maxHeight: 120, width: 'auto', height: 'auto', borderRadius: 4, display: 'block' }} />
+                              <img src={p.url} alt={p.name || `材料${idx + 1}`} style={{ maxWidth: 120, maxHeight: 120, width: 'auto', height: 'auto', borderRadius: 4, display: 'block', objectFit: 'cover' }} loading="lazy" />
                             </span>
                           </li>
                         );
@@ -482,34 +482,13 @@ export default function Dashboard() {
   }
 }
 
-// 修改AuthImage支持style透传
-function AuthImage({ src, alt, style }: { src: string, alt: string, style?: React.CSSProperties }) {
-  const [url, setUrl] = useState<string>("");
-  useEffect(() => {
-    let revoke: string | null = null;
-    fetch(src)
-      .then(res => res.blob())
-      .then(blob => {
-        const objectUrl = URL.createObjectURL(blob);
-        setUrl(objectUrl);
-        revoke = objectUrl;
-      });
-    return () => { if (revoke) URL.revokeObjectURL(revoke); };
-  }, [src]);
-  if (!url) return <span className="text-gray-400">图片加载中...</span>;
-  // 默认样式：限制最大尺寸并保持纵横比，允许外部传入样式覆盖特定属性
-  const defaultStyle: React.CSSProperties = { maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', display: 'block' };
-  const finalStyle = { ...defaultStyle, ...style };
-  return <img src={url} alt={alt} style={finalStyle} className="border shadow" />;
-}
-
 // 审批页同款图片预览弹窗
 function ImagePreviewModal({ proofs, index, onClose, onSwitch }: { proofs: any[], index: number, onClose: () => void, onSwitch: (i: number) => void }) {
   if (!proofs[index] || !proofs[index].url) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
       <div className="relative" onClick={e => e.stopPropagation()}>
-        <AuthImage src={proofs[index].url} alt={proofs[index].filename || proofs[index].name} style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 8, background: '#fff', display: 'block' }} />
+        <img src={proofs[index].url} alt={proofs[index].filename || proofs[index].name} style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 8, background: '#fff', display: 'block', objectFit: 'contain' }} />
         <button className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl" onClick={onClose}>&times;</button>
         {proofs.length > 1 && (
           <>

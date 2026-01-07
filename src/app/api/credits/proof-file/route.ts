@@ -112,7 +112,12 @@ export const GET = requireAuth(async (req, user) => {
       return NextResponse.json({ error: "无权限" }, { status: 403 });
     }
 
-    // 优先从文件系统/云存储读取
+    // 优化：如果是远程文件（如Blob），直接重定向，减轻服务器压力并加速
+    if (file_path && (file_path.startsWith('http://') || file_path.startsWith('https://'))) {
+      return NextResponse.redirect(file_path);
+    }
+
+    // 优先从文件系统读取 (本地存储)
     let fileBody = file;
     if (file_path) {
       const content = await storage.getFile(file_path);

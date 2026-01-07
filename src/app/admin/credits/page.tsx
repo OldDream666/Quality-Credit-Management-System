@@ -111,10 +111,25 @@ export default function AdminCreditsPage() {
     }
   }
 
+  const [selectedClass, setSelectedClass] = useState("all");
+
   // 所有待审批
   const pendings = credits.filter(c => c.status === 'pending');
-  const pending = pendings[pendingIndex] || null;
-  const totalPending = pendings.length;
+  // 提取班级列表
+  const classes = Array.from(new Set(pendings.map(c => c.user_class))).filter(Boolean).sort();
+
+  // 筛选后的列表
+  const filteredPendings = selectedClass === 'all'
+    ? pendings
+    : pendings.filter(c => c.user_class === selectedClass);
+
+  const pending = filteredPendings[pendingIndex] || null;
+  const currentTotal = filteredPendings.length;
+
+  // 重置索引当筛选条件变化时
+  useEffect(() => {
+    setPendingIndex(0);
+  }, [selectedClass]);
 
   if (loading || checkingAuth || !systemConfigs.roles) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
   if (!user) return <div className="text-center mt-12 text-red-600">未登录</div>;
@@ -127,15 +142,29 @@ export default function AdminCreditsPage() {
     <div className="max-w-3xl mx-auto">
       {/* 页面标题和状态栏 */}
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800">学分审批</h1>
             <p className="text-gray-500 text-sm mt-1">审核学生提交的学分申请</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* 班级筛选 */}
+            <select
+              className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+            >
+              <option value="all">所有班级 ({pendings.length})</option>
+              {classes.map(cls => (
+                <option key={cls} value={cls}>
+                  {cls} ({pendings.filter(p => p.user_class === cls).length})
+                </option>
+              ))}
+            </select>
+
             <div className="bg-blue-50 px-4 py-2 rounded-xl">
               <span className="text-gray-600 text-sm">待审批</span>
-              <span className="text-2xl font-bold text-blue-600 ml-2">{totalPending}</span>
+              <span className="text-2xl font-bold text-blue-600 ml-2">{currentTotal}</span>
             </div>
             <button
               className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition flex items-center gap-2"
@@ -151,7 +180,7 @@ export default function AdminCreditsPage() {
       </div>
 
       {/* 导航控制 */}
-      {totalPending > 0 && (
+      {currentTotal > 0 && (
         <div className="flex items-center justify-center gap-4 mb-4">
           <button
             className="flex items-center gap-1 px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -164,12 +193,12 @@ export default function AdminCreditsPage() {
             上一条
           </button>
           <span className="text-gray-600 font-medium">
-            {pendingIndex + 1} / {totalPending}
+            {pendingIndex + 1} / {currentTotal}
           </span>
           <button
             className="flex items-center gap-1 px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={pendingIndex === totalPending - 1}
-            onClick={() => setPendingIndex(i => Math.min(totalPending - 1, i + 1))}
+            disabled={pendingIndex === currentTotal - 1}
+            onClick={() => setPendingIndex(i => Math.min(currentTotal - 1, i + 1))}
           >
             下一条
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,7 +546,7 @@ function ProofList({ proofs }: { proofs: any[] }) {
 // 加载图片 (直接使用 img src, 浏览器会自动携带 cookie)
 function ProofImage({ proofId, filename, style }: { proofId: number, filename: string, style?: React.CSSProperties }) {
   const url = `/api/credits/proof-file?id=${proofId}`;
-  return <img src={url} alt={filename} style={{ maxWidth: 60, maxHeight: 60, borderRadius: 4, cursor: 'pointer', objectFit: 'cover', ...style }} loading="lazy" />;
+  return <img src={url} alt={filename} style={{ maxWidth: 120, maxHeight: 120, borderRadius: 4, cursor: 'box-zoom-in', objectFit: 'cover', ...style }} loading="lazy" />;
 }
 
 // 下载/预览非图片文件
