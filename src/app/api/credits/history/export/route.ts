@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { DatabaseConfigManager } from "@/lib/dbConfig";
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
+import { storage } from "@/lib/storage";
 
 // 导出历史审批数据
 export const GET = requireAuth(async (req, user) => {
@@ -113,10 +114,15 @@ export const GET = requireAuth(async (req, user) => {
     const creditIds = credits.map(c => c.id);
     let proofsMap: Record<number, any[]> = {};
     if (creditIds.length > 0) {
-      const proofsRes = await pool.query(
-        'SELECT id, credit_id, filename, mimetype, file FROM credits_proofs WHERE credit_id = ANY($1) ORDER BY id',
-        [creditIds]
-      );
+      // 修改查询：同时获取 file_path
+      const proofsRes = await pool.query(`
+        SELECT p.id, p.credit_id, p.filename, p.mimetype, p.file, pp.file_path 
+        FROM credits_proofs p
+        LEFT JOIN proof_paths pp ON p.id = pp.proof_id
+        WHERE p.credit_id = ANY($1) 
+        ORDER BY p.id
+      `, [creditIds]);
+
       proofsMap = proofsRes.rows.reduce((acc: any, p: any) => {
         if (!acc[p.credit_id]) acc[p.credit_id] = [];
         acc[p.credit_id].push(p);
@@ -129,7 +135,7 @@ export const GET = requireAuth(async (req, user) => {
     credits.forEach(credit => {
       const userId = credit.user_id;
       const userName = credit.user_name || credit.user_username;
-      
+
       if (!userStats[userId]) {
         userStats[userId] = {
           user_id: userId,
@@ -147,7 +153,7 @@ export const GET = requireAuth(async (req, user) => {
 
       const stats = userStats[userId];
       stats.total_submissions++;
-      
+
       if (!stats.type_stats[credit.type]) {
         stats.type_stats[credit.type] = {
           submissions: 0,
@@ -159,7 +165,7 @@ export const GET = requireAuth(async (req, user) => {
         }
       }
       stats.type_stats[credit.type].submissions++;
-      
+
       if (credit.status === 'approved') {
         stats.approved_submissions++;
         stats.total_score += Number(credit.score) || 0;
@@ -173,7 +179,7 @@ export const GET = requireAuth(async (req, user) => {
               const desc = typeof credit.description === 'string' ? JSON.parse(credit.description) : credit.description;
               hours = Number(desc.volunteerHours) || 0;
             }
-          } catch {}
+          } catch { }
           stats.type_stats[credit.type].volunteer_total_hours += hours;
         }
       } else if (credit.status === 'rejected') {
@@ -236,11 +242,13 @@ export const GET = requireAuth(async (req, user) => {
 
     // 创建ZIP文件包含Excel和证明材料
     const zip = new JSZip();
-    
+
     // 添加Excel文件
     zip.file('历史审批数据.xlsx', excelBuffer);
 
-    // 添加证明材料文件
+    // 添加证明材料文件（并行处理以提高速度）
+    const downloadPromises: Promise<void>[] = [];
+
     Object.values(userStats).forEach((user: any) => {
       const userName = user.user_name || user.user_username;
       credits.forEach(credit => {
@@ -250,19 +258,40 @@ export const GET = requireAuth(async (req, user) => {
           if (!typeFolder) return;
           const userFolder = typeFolder.folder(userName);
           if (!userFolder) return;
+
           proofs.forEach((proof: any) => {
-            userFolder.file(proof.filename, proof.file);
+            downloadPromises.push(async function () {
+              let fileContent = proof.file;
+              // 如果数据库中二进制为空，则尝试从 storage 获取
+              if ((!fileContent || fileContent.length === 0) && proof.file_path) {
+                try {
+                  const fetched = await storage.getFile(proof.file_path);
+                  if (fetched) fileContent = fetched;
+                } catch (e) {
+                  console.error(`Failed to download file for proof ${proof.id}:`, e);
+                }
+              }
+
+              if (fileContent && fileContent.length > 0) {
+                userFolder.file(proof.filename, fileContent);
+              }
+            }());
           });
         }
       });
     });
 
+    await Promise.all(downloadPromises);
+
     // 生成ZIP文件
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
 
+    // 转换 Buffer 为符合 Web 标准的 Blob (解决 TS 类型报错)
+    const zipBlob = new Blob([zipBuffer as any], { type: 'application/zip' });
+
     // 返回ZIP文件
     const exportName = `历史审批数据_${new Date().toISOString().split('T')[0]}.zip`;
-    return new NextResponse(zipBuffer, {
+    return new NextResponse(zipBlob, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename=export.zip; filename*=UTF-8''${encodeURIComponent(exportName)}`

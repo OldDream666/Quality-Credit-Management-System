@@ -126,8 +126,8 @@ export const PATCH = requireAuth(async (req, user) => {
       [status, reject_reason || '', currentUser.id, id]
     );
   } else {
-    if (typeof score !== 'number' || score < 0 || score > 1000) {
-      return NextResponse.json({ error: "分数必须在0-1000之间" }, { status: 400 });
+    if (typeof score !== 'number' || score < 0 || score > 3000) {
+      return NextResponse.json({ error: "分数必须在0-3000之间" }, { status: 400 });
     }
     result = await pool.query(
       'UPDATE credits SET status = $1, score = $2, reject_reason = NULL, approver_id = $3, approved_at = NOW() WHERE id = $4 RETURNING *',
