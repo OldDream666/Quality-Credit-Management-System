@@ -13,10 +13,6 @@ const ROLE_OPTIONS = [
   { value: 'admin', label: '管理员' }
 ];
 
-export const config = {
-  maxRequestBodySize: '10mb',
-};
-
 export const POST = requireRole(['admin'])(async (req, user) => {
   const formData = await req.formData();
   const file = formData.get('file') as File;
