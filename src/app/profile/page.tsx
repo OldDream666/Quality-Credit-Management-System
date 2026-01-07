@@ -72,8 +72,8 @@ export default function ProfilePage() {
     setPwdLoading(false);
     if (res.ok) {
       toast.success("密码修改成功");
-      setOldPwd(""); 
-      setNewPwd(""); 
+      setOldPwd("");
+      setNewPwd("");
       setConfirmPwd("");
     } else {
       toast.error(data.error || "修改失败");
@@ -88,24 +88,41 @@ export default function ProfilePage() {
   if (!user) return <div className="p-8 text-center">加载中...</div>;
 
   return (
-    <div className="max-w-md mx-auto card mt-8 sm:mt-16 p-4 sm:p-10 bg-white rounded-2xl shadow-xl relative">
+    <div className="max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-8">
       <Toaster position="top-center" toastOptions={{ duration: 2000 }} />
-      <span
-        className="absolute left-4 top-4 text-blue-700 hover:underline hover:text-blue-900 cursor-pointer flex items-center text-base select-none"
-        onClick={() => router.push("/dashboard")}
-      >
-        <svg className="inline mr-1" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 16L7 10L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        返回
-      </span>
-      <div style={{ height: 12 }} />
-      <h1 className="text-2xl sm:text-3xl font-extrabold mb-8 text-blue-700">个人信息</h1>
-      <div className="mb-4 text-base"><span className="font-bold">用户名：</span>{user.username}</div>
-      <div className="mb-4 text-base"><span className="font-bold">姓名：</span>{user.name || '-'}</div>
-      <div className="mb-4 text-base"><span className="font-bold">学号：</span>{user.student_id || '-'}</div>
-      <div className="mb-4 text-base"><span className="font-bold">角色：</span>{roleLabel(user.role)}</div>
-      <div className="mb-4 text-base"><span className="font-bold">年级：</span>{user.grade || '-'}</div>
-      <div className="mb-4 text-base"><span className="font-bold">专业：</span>{user.major || '-'}</div>
-      <div className="mb-8 text-base"><span className="font-bold">班级：</span>{user.class || '-'}</div>
+      <h1 className="text-2xl sm:text-3xl font-extrabold mb-6 text-gray-800">个人信息</h1>
+
+      <div className="space-y-3 mb-6">
+        <div className="flex items-center py-2 border-b border-gray-100">
+          <span className="w-20 text-gray-500 text-sm">用户名</span>
+          <span className="font-medium text-gray-800">{user.username}</span>
+        </div>
+        <div className="flex items-center py-2 border-b border-gray-100">
+          <span className="w-20 text-gray-500 text-sm">姓名</span>
+          <span className="font-medium text-gray-800">{user.name || '-'}</span>
+        </div>
+        <div className="flex items-center py-2 border-b border-gray-100">
+          <span className="w-20 text-gray-500 text-sm">学号</span>
+          <span className="font-medium text-gray-800">{user.student_id || '-'}</span>
+        </div>
+        <div className="flex items-center py-2 border-b border-gray-100">
+          <span className="w-20 text-gray-500 text-sm">角色</span>
+          <span className="font-medium text-gray-800">{roleLabel(user.role)}</span>
+        </div>
+        <div className="flex items-center py-2 border-b border-gray-100">
+          <span className="w-20 text-gray-500 text-sm">年级</span>
+          <span className="font-medium text-gray-800">{user.grade || '-'}</span>
+        </div>
+        <div className="flex items-center py-2 border-b border-gray-100">
+          <span className="w-20 text-gray-500 text-sm">专业</span>
+          <span className="font-medium text-gray-800">{user.major || '-'}</span>
+        </div>
+        <div className="flex items-center py-2">
+          <span className="w-20 text-gray-500 text-sm">班级</span>
+          <span className="font-medium text-gray-800">{user.class || '-'}</span>
+        </div>
+      </div>
+
       <hr className="my-6" />
       <h2 className="text-lg font-bold mb-4 text-gray-700">修改密码</h2>
       <form onSubmit={handleChangePwd} className="space-y-4">
@@ -132,8 +149,8 @@ export default function ProfilePage() {
                   className={
                     `h-2 rounded transition-all duration-300 ` +
                     (getPasswordStrength(newPwd) === '强' ? 'bg-green-500 w-full' :
-                     getPasswordStrength(newPwd) === '中' ? 'bg-orange-400 w-2/3' :
-                     'bg-red-500 w-1/3')
+                      getPasswordStrength(newPwd) === '中' ? 'bg-orange-400 w-2/3' :
+                        'bg-red-500 w-1/3')
                   }
                 />
               </div>

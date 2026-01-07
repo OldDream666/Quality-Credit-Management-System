@@ -43,8 +43,8 @@ export default function AdminCreditsPage() {
     ]).then(([data]) => {
       if (data.credits) setCredits(data.credits);
       else setError(data.error || "加载失败");
-    }).catch(() => { 
-      setError("加载失败"); 
+    }).catch(() => {
+      setError("加载失败");
     });
   }, [user, loading, router]);
 
@@ -98,8 +98,8 @@ export default function AdminCreditsPage() {
       setCredits(credits => {
         const newList = credits.filter(c => c.id !== id);
         // 若当前审批单被删除，自动跳到上一条或下一条
-        if (pendingIndex > 0 && pendingIndex >= newList.filter(c=>c.status==='pending').length) {
-          setPendingIndex(pendingIndex-1);
+        if (pendingIndex > 0 && pendingIndex >= newList.filter(c => c.status === 'pending').length) {
+          setPendingIndex(pendingIndex - 1);
         }
         return newList;
       });
@@ -124,45 +124,69 @@ export default function AdminCreditsPage() {
   if (user.role === 'admin' || !canApprove) return <div className="text-center mt-12 text-red-600">无权限</div>;
 
   return (
-    <div className="max-w-xl mx-auto card mt-8 sm:mt-16 p-4 sm:p-10 bg-white rounded-2xl shadow-xl relative">
-      <span
-        className="absolute left-4 top-4 text-blue-700 hover:underline hover:text-blue-900 cursor-pointer flex items-center text-base select-none"
-        onClick={() => router.push("/admin/credits/overview")}
-        style={{ fontSize: '1rem' }}
-      >
-        <svg className="inline mr-1" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M13 16L7 10L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        返回
-      </span>
-      <div style={{ height: 12 }} />
-      <h1 className="text-2xl sm:text-3xl font-extrabold mb-8 text-blue-800">学分审批</h1>
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-gray-600">剩余待审：<span className="font-bold text-blue-600">{totalPending}</span></span>
-        <div className="flex gap-2 items-center">
-          {totalPending > 0 && (
-            <>
-              <button
-                className="border border-blue-600 text-blue-700 px-3 py-1 rounded disabled:opacity-50"
-                disabled={pendingIndex === 0}
-                onClick={() => setPendingIndex(i => Math.max(0, i-1))}
-              >上一条</button>
-              <button
-                className="border border-blue-600 text-blue-700 px-3 py-1 rounded disabled:opacity-50"
-                disabled={pendingIndex === totalPending-1}
-                onClick={() => setPendingIndex(i => Math.min(totalPending-1, i+1))}
-              >下一条</button>
-            </>
-          )}
-          <button
-            className="border border-blue-600 text-blue-700 hover:bg-blue-50 font-medium px-4 py-1.5 rounded transition shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ml-2"
-            onClick={() => router.push("/admin/credits/history")}
-          >
-            查看历史审批记录
-          </button>
+    <div className="max-w-3xl mx-auto">
+      {/* 页面标题和状态栏 */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800">学分审批</h1>
+            <p className="text-gray-500 text-sm mt-1">审核学生提交的学分申请</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-50 px-4 py-2 rounded-xl">
+              <span className="text-gray-600 text-sm">待审批</span>
+              <span className="text-2xl font-bold text-blue-600 ml-2">{totalPending}</span>
+            </div>
+            <button
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition flex items-center gap-2"
+              onClick={() => router.push("/admin/credits/history")}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              历史记录
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* 导航控制 */}
+      {totalPending > 0 && (
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <button
+            className="flex items-center gap-1 px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={pendingIndex === 0}
+            onClick={() => setPendingIndex(i => Math.max(0, i - 1))}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            上一条
+          </button>
+          <span className="text-gray-600 font-medium">
+            {pendingIndex + 1} / {totalPending}
+          </span>
+          <button
+            className="flex items-center gap-1 px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={pendingIndex === totalPending - 1}
+            onClick={() => setPendingIndex(i => Math.min(totalPending - 1, i + 1))}
+          >
+            下一条
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* 审批卡片 */}
       {!pending ? (
-        <div className="flex flex-col items-center justify-center min-h-[300px]">
-          <div className="text-gray-400 text-lg mb-6">当前暂无审批</div>
+        <div className="bg-white rounded-2xl shadow-lg p-12 flex flex-col items-center justify-center">
+          <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div className="text-gray-400 text-lg">当前暂无待审批申请</div>
+          <p className="text-gray-300 text-sm mt-2">所有申请都已处理完毕</p>
         </div>
       ) : (
         <ApprovalCard credit={pending} onApprove={handleApprove} loading={loading} creditTypesConfig={creditTypesConfig} systemConfigs={systemConfigs} />
@@ -171,9 +195,9 @@ export default function AdminCreditsPage() {
   );
 }
 
-function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemConfigs }: { 
-  credit: any, 
-  onApprove: (id: number, status: string, reject_reason?: string, score?: number) => void, 
+function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemConfigs }: {
+  credit: any,
+  onApprove: (id: number, status: string, reject_reason?: string, score?: number) => void,
   loading: boolean,
   creditTypesConfig: Record<string, any>,
   systemConfigs: any
@@ -211,7 +235,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
     // 推荐分数逻辑（完全基于动态配置）
     let defaultScore = "";
     const typeConfig = creditTypesConfig[credit.type];
-    
+
     if (typeConfig) {
       if (typeConfig.scoreCalculation === 'fixed') {
         // 固定分数
@@ -219,7 +243,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
       } else if (typeConfig.scoreCalculation === 'time_based' && credit.type === '志愿活动') {
         // 按时长计算
         let desc: any = {};
-        try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch {}
+        try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch { }
         const hours = Number(desc.volunteerHours) || 0;
         const scorePerHour = typeConfig.scorePerHour || 0;
         if (hours > 0) defaultScore = String((hours * scorePerHour).toFixed(2));
@@ -228,7 +252,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
       // 配置未加载，等待配置加载
       console.warn('配置未加载，无法计算推荐分数');
     }
-    
+
     setApproveScore(defaultScore);
     setShowApprove(true);
     setTimeout(() => approveInputRef.current?.focus(), 100);
@@ -265,70 +289,115 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
     volunteerName?: string;
     volunteerHours?: string | number;
   } = {};
-  try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch {}
+  try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch { }
 
   // 动态渲染类型特有字段
   const typeConfig = creditTypesConfig[credit.type] || {};
   const dynamicFields = Array.isArray(typeConfig.fields) ? typeConfig.fields : [];
 
   return (
-    <div className="bg-white rounded-xl shadow p-6 flex flex-col gap-4">
-      <div className="flex flex-wrap gap-4">
-        <div><span className="font-bold">姓名：</span>{credit.user_name}</div>
-        <div><span className="font-bold">学号：</span>{credit.user_username}</div>
-        <div><span className="font-bold">班级：</span>{credit.user_class}</div>
-        <div><span className="font-bold">类型：</span>{credit.type}</div>
-      </div>
-      {/* 动态渲染类型特有字段 */}
-      {dynamicFields.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {dynamicFields.map((field: any) => {
-            const fieldKey = typeof field === 'string' ? field : field.key;
-            const fieldLabel =
-              (systemConfigs?.availableFields?.find((f: any) => f.key === fieldKey)?.label)
-              || (typeof field === 'object' && field.label)
-              || fieldKey;
-            const fieldType = systemConfigs?.availableFields?.find((f: any) => f.key === fieldKey)?.type;
-            let value = (desc as Record<string, any>)[fieldKey];
-            // 文件类型字段或旧 key 跳过展示
-            if (fieldType === 'file' || fieldKey === 'proofFiles' || fieldKey === 'proofs') return null;
-            if (value === undefined || value === null || value === "") return null;
-            return (
-              <div key={fieldKey}><span className="font-bold">{fieldLabel}：</span>{value}</div>
-            );
-          })}
-        </div>
-      )}
-      {/* 志愿活动分数计算说明（保留原有逻辑） */}
-      {credit.type === '志愿活动' && desc.volunteerHours && (() => {
-        const typeConfig = creditTypesConfig[credit.type];
-        const hours = Number(desc.volunteerHours) || 0;
-        if (typeConfig && typeConfig.scoreCalculation === 'time_based' && hours > 0) {
-          const scorePerHour = typeConfig.scorePerHour || 0;
-          const calculatedScore = ((hours * scorePerHour).toFixed(2));
-          return (
-            <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
-              📊 按时长计算：{hours} 小时 × {scorePerHour} 分/小时 = {calculatedScore} 分
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      {/* 申请人信息头部 */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+              {credit.user_name?.charAt(0) || '?'}
             </div>
-          );
-        }
-        return null;
-      })()}
-      <div>
-        <span className="font-bold">证明材料：</span>
-        <ProofList proofs={credit.proofs} />
+            <div>
+              <div className="font-bold text-lg text-gray-800">{credit.user_name}</div>
+              <div className="text-gray-500 text-sm">{credit.user_username} · {credit.user_class}</div>
+            </div>
+          </div>
+          <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+            {credit.type}
+          </div>
+        </div>
       </div>
-      <div className="flex gap-4 mt-2">
-        <button
-          className="bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2 rounded shadow transition focus:outline-none focus:ring-2 focus:ring-green-300"
-          disabled={loading}
-          onClick={openApprove}
-        >通过</button>
-        <button
-          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium px-5 py-2 rounded shadow transition focus:outline-none focus:ring-2 focus:ring-gray-300"
-          disabled={loading}
-          onClick={openReject}
-        >驳回</button>
+
+      {/* 申请内容 */}
+      <div className="p-6">
+        {/* 动态字段 */}
+        {dynamicFields.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">申请详情</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {dynamicFields.map((field: any) => {
+                const fieldKey = typeof field === 'string' ? field : field.key;
+                const fieldLabel =
+                  (systemConfigs?.availableFields?.find((f: any) => f.key === fieldKey)?.label)
+                  || (typeof field === 'object' && field.label)
+                  || fieldKey;
+                const fieldType = systemConfigs?.availableFields?.find((f: any) => f.key === fieldKey)?.type;
+                let value = (desc as Record<string, any>)[fieldKey];
+                if (fieldType === 'file' || fieldKey === 'proofFiles' || fieldKey === 'proofs') return null;
+                if (value === undefined || value === null || value === "") return null;
+                return (
+                  <div key={fieldKey} className="bg-gray-50 rounded-lg px-4 py-3">
+                    <div className="text-xs text-gray-500 mb-1">{fieldLabel}</div>
+                    <div className="font-medium text-gray-800">{value}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 志愿活动分数计算 */}
+        {credit.type === '志愿活动' && desc.volunteerHours && (() => {
+          const typeConfig = creditTypesConfig[credit.type];
+          const hours = Number(desc.volunteerHours) || 0;
+          if (typeConfig && typeConfig.scoreCalculation === 'time_based' && hours > 0) {
+            const scorePerHour = typeConfig.scorePerHour || 0;
+            const calculatedScore = ((hours * scorePerHour).toFixed(2));
+            return (
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span className="font-medium">推荐分数计算</span>
+                </div>
+                <div className="mt-2 text-lg font-bold text-blue-800">
+                  {hours} 小时 × {scorePerHour} 分/小时 = <span className="text-2xl">{calculatedScore}</span> 分
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        {/* 证明材料 */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">证明材料</h3>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <ProofList proofs={credit.proofs} />
+          </div>
+        </div>
+
+        {/* 操作按钮 */}
+        <div className="flex gap-4 pt-4 border-t border-gray-100">
+          <button
+            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-green-500/30 transition-all duration-200 flex items-center justify-center gap-2"
+            disabled={loading}
+            onClick={openApprove}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            通过
+          </button>
+          <button
+            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+            disabled={loading}
+            onClick={openReject}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            驳回
+          </button>
+        </div>
       </div>
       {/* 通过弹窗 */}
       {showApprove && (
@@ -356,7 +425,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
                   );
                 } else if (typeConfig.scoreCalculation === 'time_based' && credit.type === '志愿活动') {
                   let desc: any = {};
-                  try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch {}
+                  try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch { }
                   const hours = Number(desc.volunteerHours) || 0;
                   const scorePerHour = typeConfig.scorePerHour || 0;
                   const calculatedScore = ((hours * scorePerHour).toFixed(2));
@@ -481,7 +550,7 @@ function ProofImage({ proofId, filename, style }: { proofId: number, filename: s
       if (url) setUrl(url);
     });
   }, [proofId]);
-  if (!url) return <span style={{display:'inline-block',width:60,height:60,background:'#f3f3f3',borderRadius:4,textAlign:'center',lineHeight:'60px',color:'#bbb',...style}}>图片加载中</span>;
+  if (!url) return <span style={{ display: 'inline-block', width: 60, height: 60, background: '#f3f3f3', borderRadius: 4, textAlign: 'center', lineHeight: '60px', color: '#bbb', ...style }}>图片加载中</span>;
   return <img src={url} alt={filename} style={{ maxWidth: 60, maxHeight: 60, borderRadius: 4, cursor: 'pointer', ...style }} />;
 }
 

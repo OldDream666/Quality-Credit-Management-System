@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   RoleConfig,
   CreditTypeConfig,
   StatusConfig,
@@ -39,7 +39,7 @@ export default function SystemConfigPage() {
   const [editingRole, setEditingRole] = useState<RoleConfig | null>(null);
   const [isAddingRole, setIsAddingRole] = useState(false);
   const [deletingRole, setDeletingRole] = useState<RoleConfig | null>(null);
-  
+
   // 学分类型编辑状态
   const [editingCreditType, setEditingCreditType] = useState<CreditTypeConfig | null>(null);
   const [isAddingCreditType, setIsAddingCreditType] = useState(false);
@@ -119,7 +119,7 @@ export default function SystemConfigPage() {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         toast.success("配置保存成功");
         await loadConfigs();
@@ -146,7 +146,7 @@ export default function SystemConfigPage() {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         toast.success("配置删除成功");
         await loadConfigs();
@@ -189,19 +189,12 @@ export default function SystemConfigPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 px-4 py-8">
+    <div className="max-w-6xl mx-auto">
       <Toaster position="top-center" />
-      
-      <div className="max-w-6xl mx-auto">
+
+      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8">
         <div className="mb-6">
-          <Button
-            variant="secondary"
-            onClick={() => router.push("/dashboard")}
-            className="mb-4"
-          >
-            ← 返回控制台
-          </Button>
-          <h1 className="text-3xl font-bold text-gray-900">系统配置管理</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">系统配置管理</h1>
           <p className="text-gray-600 mt-2">管理系统角色、学分类型等配置信息</p>
         </div>
 
@@ -216,11 +209,10 @@ export default function SystemConfigPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.key
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === tab.key
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -243,7 +235,7 @@ export default function SystemConfigPage() {
                 添加角色
               </Button>
             </div>
-            
+
             <div className="grid gap-4">
               {configData.roles.map(role => (
                 <Card key={role.key} className="p-6">
@@ -317,7 +309,7 @@ export default function SystemConfigPage() {
                 添加类型
               </Button>
             </div>
-            
+
             <div className="grid gap-4">
               {configData.creditTypes.map(creditType => (
                 <Card key={creditType.key} className="p-6">
@@ -399,7 +391,7 @@ export default function SystemConfigPage() {
                     </label>
                     <Input
                       value={editingRole.key}
-                      onChange={(e) => setEditingRole({...editingRole, key: e.target.value as any})}
+                      onChange={(e) => setEditingRole({ ...editingRole, key: e.target.value as any })}
                       placeholder="admin, student, monitor..."
                       disabled={!isAddingRole}
                     />
@@ -410,7 +402,7 @@ export default function SystemConfigPage() {
                     </label>
                     <Input
                       value={editingRole.label}
-                      onChange={(e) => setEditingRole({...editingRole, label: e.target.value})}
+                      onChange={(e) => setEditingRole({ ...editingRole, label: e.target.value })}
                       placeholder="管理员, 学生, 班长..."
                     />
                   </div>
@@ -422,22 +414,22 @@ export default function SystemConfigPage() {
                       className="w-full border border-gray-300 rounded-md px-3 py-2"
                       rows={3}
                       value={editingRole.description}
-                      onChange={(e) => setEditingRole({...editingRole, description: e.target.value})}
+                      onChange={(e) => setEditingRole({ ...editingRole, description: e.target.value })}
                       placeholder="角色功能描述..."
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <ColorPicker
                       label="标签颜色"
                       value={editingRole.color}
-                      onChange={(color) => setEditingRole({...editingRole, color})}
+                      onChange={(color) => setEditingRole({ ...editingRole, color })}
                       type="tag"
                     />
                     <ColorPicker
                       label="卡片颜色"
                       value={editingRole.cardColor}
-                      onChange={(cardColor) => setEditingRole({...editingRole, cardColor})}
+                      onChange={(cardColor) => setEditingRole({ ...editingRole, cardColor })}
                       type="gradient"
                     />
                   </div>
@@ -529,7 +521,7 @@ export default function SystemConfigPage() {
                       </label>
                       <Input
                         value={editingCreditType.key}
-                        onChange={(e) => setEditingCreditType({...editingCreditType, key: e.target.value as any})}
+                        onChange={(e) => setEditingCreditType({ ...editingCreditType, key: e.target.value as any })}
                         placeholder="个人活动, 个人比赛..."
                         disabled={!isAddingCreditType}
                       />
@@ -540,12 +532,12 @@ export default function SystemConfigPage() {
                       </label>
                       <Input
                         value={editingCreditType.label}
-                        onChange={(e) => setEditingCreditType({...editingCreditType, label: e.target.value})}
+                        onChange={(e) => setEditingCreditType({ ...editingCreditType, label: e.target.value })}
                         placeholder="个人活动, 个人比赛..."
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       描述
@@ -554,22 +546,22 @@ export default function SystemConfigPage() {
                       className="w-full border border-gray-300 rounded-md px-3 py-2"
                       rows={3}
                       value={editingCreditType.description}
-                      onChange={(e) => setEditingCreditType({...editingCreditType, description: e.target.value})}
+                      onChange={(e) => setEditingCreditType({ ...editingCreditType, description: e.target.value })}
                       placeholder="学分类型的详细描述..."
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <ColorPicker
                       label="标签颜色"
                       value={editingCreditType.color}
-                      onChange={(color) => setEditingCreditType({...editingCreditType, color})}
+                      onChange={(color) => setEditingCreditType({ ...editingCreditType, color })}
                       type="tag"
                     />
                     <ColorPicker
                       label="卡片颜色"
                       value={editingCreditType.cardColor}
-                      onChange={(cardColor) => setEditingCreditType({...editingCreditType, cardColor})}
+                      onChange={(cardColor) => setEditingCreditType({ ...editingCreditType, cardColor })}
                       type="gradient"
                     />
                   </div>
@@ -584,7 +576,7 @@ export default function SystemConfigPage() {
                         className="w-full border border-gray-300 rounded-md px-3 py-2"
                         value={editingCreditType.scoreCalculation}
                         onChange={(e) => setEditingCreditType({
-                          ...editingCreditType, 
+                          ...editingCreditType,
                           scoreCalculation: e.target.value as any
                         })}
                       >

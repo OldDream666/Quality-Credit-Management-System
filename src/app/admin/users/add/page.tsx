@@ -26,7 +26,7 @@ export default function AddUserPage() {
     formData.append("file", file);
     const res = await fetch("/api/admin/users/import", {
       method: "POST",
-  headers: {},
+      headers: {},
       body: formData
     });
     const data = await res.json();
@@ -39,21 +39,13 @@ export default function AddUserPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-8 bg-white/90 rounded-xl shadow-lg mt-6 sm:mt-12">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-blue-700">添加用户/批量导入</h1>
-        <button
-          className="border border-blue-600 text-blue-700 hover:bg-blue-50 font-medium px-4 py-1.5 rounded transition shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-          onClick={() => router.push("/admin/users")}
-        >
-          返回列表
-        </button>
-      </div>
+    <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-4 sm:p-8">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">添加用户/批量导入</h1>
       <div className="flex flex-col sm:flex-row gap-8">
         {/* 单个添加 */}
         <div className="flex-1 mb-8 sm:mb-0 bg-white/0">
           <h2 className="font-bold mb-2">单个添加</h2>
-          <AddUserForm onSuccess={() => {}} />
+          <AddUserForm onSuccess={() => { }} />
         </div>
         {/* 批量导入 */}
         <div className="flex-1 bg-white/0">

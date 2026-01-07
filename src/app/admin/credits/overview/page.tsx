@@ -46,28 +46,17 @@ export default function CreditsOverview() {
   if (!canApprove) return <div className="text-center mt-12 text-red-600">无权限</div>;
 
   const total = approvals.length;
-  const pending = approvals.filter((c:any)=>c.status==='pending').length;
-  const approved = approvals.filter((c:any)=>c.status==='approved').length;
-  const rejected = approvals.filter((c:any)=>c.status==='rejected').length;
+  const pending = approvals.filter((c: any) => c.status === 'pending').length;
+  const approved = approvals.filter((c: any) => c.status === 'approved').length;
+  const rejected = approvals.filter((c: any) => c.status === 'rejected').length;
 
   return (
-    <div className="min-h-screen flex justify-center items-start bg-gradient-to-br from-blue-50 to-purple-50 px-4 py-8">
-      <div className="max-w-5xl w-full bg-white rounded-2xl shadow-xl p-10 relative mt-12">
-        <span
-          className="absolute left-4 top-4 text-blue-700 hover:underline hover:text-blue-900 cursor-pointer flex items-center text-base select-none"
-          onClick={() => router.push("/dashboard")}
-        >
-          <svg className="inline mr-1" width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M13 16L7 10L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          返回
-        </span>
-        <div style={{ height: 12 }} />
+    <div className="max-w-5xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-primary mb-2">学分审批总览</h1>
-            <div className="text-gray-500 text-base">账号：{user.username}</div>
-            <div className="text-gray-500 text-base">班级：{user.class}</div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2">学分审批总览</h1>
+            <div className="text-gray-500 text-sm">账号：{user.username} · 班级：{user.class}</div>
           </div>
           <button className="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-3 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-purple-300 text-lg" onClick={() => router.push("/admin/credits")}>去审批</button>
         </div>
@@ -106,36 +95,36 @@ export default function CreditsOverview() {
             <tbody>
               {approvals.length === 0 ? (
                 <tr><td colSpan={6} className="text-center text-gray-400 py-6">暂无审批记录</td></tr>
-              ) : approvals.slice(0, 5).map((c:any) => {
+              ) : approvals.slice(0, 5).map((c: any) => {
                 const statusMap: Record<string, string> = {
                   approved: '已通过',
                   rejected: '已拒绝',
                   pending: '待审批',
                 };
                 const date = c.created_at ? new Date(c.created_at) : null;
-                const dateStr = date ? `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}` : '';
+                const dateStr = date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : '';
                 return (
                   <tr key={c.id} className="border-t hover:bg-blue-50 transition">
                     <td className="py-2 px-3 align-middle text-center">{c.user_name || c.username || '-'}</td>
                     <td className="py-2 px-3 align-middle text-center">{c.user_username || c.username || '-'}</td>
                     <td className="py-2 px-3 align-middle text-center">{c.type}
-                        {(() => {
-                          let desc: any = {};
-                          try { desc = c.description ? JSON.parse(c.description) : {}; } catch {}
-                          if (c.type === '个人活动' && desc.activityName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.activityName}</div>;
-                          if (c.type === '个人比赛' && desc.competitionName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.competitionName}</div>;
-                          if (c.type === '个人证书' && desc.certificateName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.certificateName}</div>;
-                          if (c.type === '志愿活动' && desc.volunteerName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.volunteerName}</div>;
-                          return null;
-                        })()}
-                      </td>
+                      {(() => {
+                        let desc: any = {};
+                        try { desc = c.description ? JSON.parse(c.description) : {}; } catch { }
+                        if (c.type === '个人活动' && desc.activityName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.activityName}</div>;
+                        if (c.type === '个人比赛' && desc.competitionName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.competitionName}</div>;
+                        if (c.type === '个人证书' && desc.certificateName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.certificateName}</div>;
+                        if (c.type === '志愿活动' && desc.volunteerName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.volunteerName}</div>;
+                        return null;
+                      })()}
+                    </td>
                     <td className="py-2 px-3 align-middle text-center">{c.score}</td>
                     <td className="py-2 px-3 align-middle text-center">
                       <span className={
                         c.status === 'approved' ? 'bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold' :
-                        c.status === 'rejected' ? 'bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold' :
-                        c.status === 'pending' ? 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold' :
-                        'bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold'
+                          c.status === 'rejected' ? 'bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold' :
+                            c.status === 'pending' ? 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold' :
+                              'bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold'
                       }>
                         {statusMap[c.status] || c.status}
                       </span>

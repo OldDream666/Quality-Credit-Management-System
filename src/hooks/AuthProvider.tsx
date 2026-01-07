@@ -22,6 +22,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // 拉取用户信息
   const refreshUser = useCallback(async () => {
+    // 检查是否在公开页面（登录、注册等）
+    const isPublicRoute = ['/login', '/register', '/forgot-password', '/'].includes(window.location.pathname);
+
     try {
       const response = await authAPI.getMe();
       if (response.user) {
@@ -30,13 +33,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setUser(null);
         document.cookie = 'token=; Max-Age=0; path=/;';
-        router.replace('/login');
+        // 只在非公开页面时跳转
+        if (!isPublicRoute) {
+          router.replace('/login');
+        }
       }
     } catch (err: any) {
       setUser(null);
       document.cookie = 'token=; Max-Age=0; path=/;';
-      setError('认证失败，请重新登录');
-      router.replace('/login');
+      // 只在非公开页面时设置错误并跳转
+      if (!isPublicRoute) {
+        setError('认证失败，请重新登录');
+        router.replace('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    } catch {}
+    } catch { }
     document.cookie = 'token=; Max-Age=0; path=/;';
     setUser(null);
     setError(null);

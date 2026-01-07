@@ -99,7 +99,7 @@ export default function CreditsHistoryPage() {
   // 筛选逻辑
   useEffect(() => {
     setFilterLoading(true);
-    
+
     // 使用 setTimeout 来避免过于频繁的筛选
     const timeoutId = setTimeout(() => {
       let filtered = records;
@@ -112,7 +112,7 @@ export default function CreditsHistoryPage() {
       // 搜索筛选
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
-        filtered = filtered.filter(r => 
+        filtered = filtered.filter(r =>
           (r.user_name && r.user_name.toLowerCase().includes(term)) ||
           (r.user_username && r.user_username.toLowerCase().includes(term))
         );
@@ -185,20 +185,17 @@ export default function CreditsHistoryPage() {
   const allStatuses = Array.from(new Set(records.map(r => r.status))).sort();
 
   return (
-    <div className="min-h-screen flex justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4 py-8">
-      <div className="max-w-6xl w-full bg-white rounded-xl shadow-lg p-8 mt-6 sm:mt-12">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-blue-700">历史审批记录</h1>
-          <button className="border border-blue-600 text-blue-700 hover:bg-blue-50 font-medium px-4 py-1.5 rounded transition shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300" onClick={() => router.push("/admin")}>返回审批</button>
-        </div>
+    <div className="w-full">
+      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">历史审批记录</h1>
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
           <div className="flex flex-wrap items-center gap-4 mb-4">
             <div className="flex-1 min-w-[200px]">
               <input type="text" placeholder="搜索姓名或学号..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <button onClick={() => setShowFilters(!showFilters)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">{showFilters ? '隐藏筛选' : '显示筛选'}</button>
-            <button 
-              onClick={handleExport} 
+            <button
+              onClick={handleExport}
               disabled={exporting || filteredRecords.length === 0}
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed ml-2"
             >
@@ -226,9 +223,9 @@ export default function CreditsHistoryPage() {
                   <option value="">全部状态</option>
                   {allStatuses.map(status => (
                     <option key={status} value={status}>
-                      {status === 'approved' ? '已通过' : 
-                       status === 'rejected' ? '已拒绝' : 
-                       status === 'pending' ? '待审批' : status}
+                      {status === 'approved' ? '已通过' :
+                        status === 'rejected' ? '已拒绝' :
+                          status === 'pending' ? '待审批' : status}
                     </option>
                   ))}
                 </select>
@@ -296,7 +293,7 @@ export default function CreditsHistoryPage() {
                       <td className="py-2 px-3 align-middle text-center">{r.type}
                         {(() => {
                           let desc: any = {};
-                          try { desc = r.description ? JSON.parse(r.description) : {}; } catch {}
+                          try { desc = r.description ? JSON.parse(r.description) : {}; } catch { }
                           if (r.type === '个人活动' && desc.activityName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.activityName}</div>;
                           if (r.type === '个人比赛' && desc.competitionName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.competitionName}</div>;
                           if (r.type === '个人证书' && desc.certificateName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.certificateName}</div>;
@@ -309,9 +306,9 @@ export default function CreditsHistoryPage() {
                       <td className="py-2 px-3 align-middle text-center">
                         <span className={
                           r.status === 'approved' ? 'bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold' :
-                          r.status === 'rejected' ? 'bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold' :
-                          r.status === 'pending' ? 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold' :
-                          'bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold'
+                            r.status === 'rejected' ? 'bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold' :
+                              r.status === 'pending' ? 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold' :
+                                'bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold'
                         }>
                           {r.status === 'approved' ? '已通过' : r.status === 'rejected' ? '已拒绝' : r.status === 'pending' ? '待审批' : r.status}
                         </span>
@@ -345,7 +342,7 @@ export default function CreditsHistoryPage() {
                     <option value={100}>100条</option>
                   </select>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setCurrentPage(1)}
@@ -361,11 +358,11 @@ export default function CreditsHistoryPage() {
                   >
                     上一页
                   </button>
-                  
+
                   <span className="px-3 py-1 text-sm">
                     {currentPage} / {totalPages}
                   </span>
-                  
+
                   <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
@@ -415,7 +412,7 @@ function ProofList({ proofs }: { proofs: any[] }) {
 
   useEffect(() => {
     if (!proofs || !proofs.length) return;
-  // token 已由 httpOnly cookie 管理，无需传递
+    // token 已由 httpOnly cookie 管理，无需传递
     const uncachedProofs = proofs.filter(p => !cacheRef.current[p.id] && !urls[p.id] && typeof pendingRef.current[p.id] === 'undefined');
     if (uncachedProofs.length === 0) {
       // 使用缓存的数据
@@ -434,7 +431,7 @@ function ProofList({ proofs }: { proofs: any[] }) {
     const proofIds = uncachedProofs.map(p => p.id).join(',');
     // 创建批量请求的 Promise
     const batchRequest = fetch(`/api/credits/proof-file?ids=${proofIds}`, {
-  headers: {},
+      headers: {},
     })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
@@ -520,21 +517,21 @@ function ProofList({ proofs }: { proofs: any[] }) {
             return (
               <span key={p.id} style={{ display: 'inline-block', cursor: 'pointer' }} onClick={() => setPreviewIndex(imgIdx)}>
                 {url ? (
-                  <img 
-                    src={url} 
-                    alt={p.filename} 
+                  <img
+                    src={url}
+                    alt={p.filename}
                     style={{ maxWidth: 40, maxHeight: 40, borderRadius: 4 }}
                     loading="lazy"
                   />
                 ) : (
-                  <div 
-                    style={{ 
-                      width: 40, 
-                      height: 40, 
-                      borderRadius: 4, 
-                      background: '#f3f4f6', 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 4,
+                      background: '#f3f4f6',
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '10px',
                       color: '#9ca3af'
@@ -548,11 +545,11 @@ function ProofList({ proofs }: { proofs: any[] }) {
           } else {
             // pdf和其它类型都显示为下载链接
             return (
-              <a 
-                key={p.id} 
-                href={url || '#'} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                key={p.id}
+                href={url || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-600 underline text-xs"
                 style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
               >
