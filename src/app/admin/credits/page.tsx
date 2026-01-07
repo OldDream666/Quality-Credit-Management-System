@@ -301,8 +301,8 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
       return;
     }
     const numScore = Number(trimmed);
-    if (isNaN(numScore) || numScore < 0 || numScore > 1000) {
-      toast.error('分数必须在0-1000之间');
+    if (isNaN(numScore) || numScore < 0 || numScore > 3000) {
+      toast.error('分数必须在0-3000之间');
       return;
     }
     onApprove(credit.id, 'approved', undefined, numScore);
@@ -436,7 +436,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
             <input
               ref={approveInputRef}
               className="border rounded px-3 py-2 w-full"
-              placeholder="分数（必填，0-1000）"
+              placeholder="分数（必填，0-3000）"
               value={approveScore}
               onChange={e => setApproveScore(e.target.value)}
               maxLength={7}
