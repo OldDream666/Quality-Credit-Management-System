@@ -482,6 +482,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
   );
 }
 
+
 // 组件：多文件证明材料展示
 function ProofList({ proofs }: { proofs: any[] }) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
@@ -513,142 +514,38 @@ function ProofList({ proofs }: { proofs: any[] }) {
   );
 }
 
-// 加载图片（不再传递token，依赖 httpOnly cookie）
+// 加载图片 (直接使用 img src, 浏览器会自动携带 cookie)
 function ProofImage({ proofId, filename, style }: { proofId: number, filename: string, style?: React.CSSProperties }) {
-  const [url, setUrl] = useState<string>("");
-  const cacheRef = useRef<{ [id: number]: string }>({});
-  const pendingRef = useRef<{ [id: number]: Promise<string> }>({});
-  useEffect(() => {
-    if (cacheRef.current[proofId]) {
-      setUrl(cacheRef.current[proofId]);
-      return;
-    }
-    if (typeof pendingRef.current[proofId] !== 'undefined') {
-      pendingRef.current[proofId].then(cachedUrl => {
-        if (cachedUrl) setUrl(cachedUrl);
-      });
-      return;
-    }
-    const request = fetch(`/api/credits/proof-file?id=${proofId}`)
-      .then(res => res.ok ? res.blob() : null)
-      .then(blob => {
-        if (blob) {
-          const objectUrl = URL.createObjectURL(blob);
-          cacheRef.current[proofId] = objectUrl;
-          delete pendingRef.current[proofId];
-          return objectUrl;
-        }
-        delete pendingRef.current[proofId];
-        return "";
-      })
-      .catch(() => {
-        delete pendingRef.current[proofId];
-        return "";
-      });
-    pendingRef.current[proofId] = request;
-    request.then(url => {
-      if (url) setUrl(url);
-    });
-  }, [proofId]);
-  if (!url) return <span style={{ display: 'inline-block', width: 60, height: 60, background: '#f3f3f3', borderRadius: 4, textAlign: 'center', lineHeight: '60px', color: '#bbb', ...style }}>图片加载中</span>;
-  return <img src={url} alt={filename} style={{ maxWidth: 60, maxHeight: 60, borderRadius: 4, cursor: 'pointer', ...style }} />;
+  const url = `/api/credits/proof-file?id=${proofId}`;
+  return <img src={url} alt={filename} style={{ maxWidth: 60, maxHeight: 60, borderRadius: 4, cursor: 'pointer', objectFit: 'cover', ...style }} loading="lazy" />;
 }
 
-// 下载/预览非图片文件（不再传递token，依赖 httpOnly cookie）
+// 下载/预览非图片文件
 function ProofFileLink({ proofId, filename, mimetype }: { proofId: number, filename: string, mimetype?: string }) {
-  const [downloading, setDownloading] = useState(false);
-  const [error, setError] = useState<string>("");
-
-  const handleClick = async () => {
-    setDownloading(true);
-    setError("");
-    try {
-      const res = await fetch(`/api/credits/proof-file?id=${proofId}`);
-      if (!res.ok) {
-        const txt = await res.text();
-        setError(txt || "下载失败");
-        setDownloading(false);
-        return;
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      if (mimetype === 'application/pdf') {
-        window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 1000 * 60);
-      } else {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-    } catch (e) {
-      setError("下载失败");
-    }
-    setDownloading(false);
-  };
-
+  const url = `/api/credits/proof-file?id=${proofId}`;
   return (
-    <span>
-      <button
-        onClick={handleClick}
-        disabled={downloading}
-        className="text-blue-600 underline bg-transparent border-none cursor-pointer"
-        style={{ padding: 0, margin: 0 }}
-      >
-        {filename}
-      </button>
-      {downloading && <span className="text-gray-400 ml-2">{mimetype === 'application/pdf' ? '加载中...' : '下载中...'}</span>}
-      {error && <span className="text-red-500 ml-2">{error}</span>}
-    </span>
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline bg-transparent border-none cursor-pointer text-sm"
+      style={{ margin: 0 }}
+      download={filename}
+    >
+      {filename}
+    </a>
   );
 }
-// 图片预览弹窗（不再传递token，依赖 httpOnly cookie）
+
+// 图片预览弹窗
 function ImagePreviewModal({ proofs, index, onClose, onSwitch }: { proofs: any[], index: number, onClose: () => void, onSwitch: (i: number) => void }) {
-  const [url, setUrl] = useState<string>("");
-  const cacheRef = useRef<{ [id: number]: string }>({});
-  const pendingRef = useRef<{ [id: number]: Promise<string> }>({});
-  useEffect(() => {
-    const proofId = proofs[index]?.id;
-    if (!proofId) return;
-    if (cacheRef.current[proofId]) {
-      setUrl(cacheRef.current[proofId]);
-      return;
-    }
-    if (typeof pendingRef.current[proofId] !== 'undefined') {
-      pendingRef.current[proofId].then(cachedUrl => {
-        if (cachedUrl) setUrl(cachedUrl);
-      });
-      return;
-    }
-    const request = fetch(`/api/credits/proof-file?id=${proofId}`)
-      .then(res => res.ok ? res.blob() : null)
-      .then(blob => {
-        if (blob) {
-          const objectUrl = URL.createObjectURL(blob);
-          cacheRef.current[proofId] = objectUrl;
-          delete pendingRef.current[proofId];
-          return objectUrl;
-        }
-        delete pendingRef.current[proofId];
-        return "";
-      })
-      .catch(() => {
-        delete pendingRef.current[proofId];
-        return "";
-      });
-    pendingRef.current[proofId] = request;
-    request.then(url => {
-      if (url) setUrl(url);
-    });
-  }, [index, proofs]);
-  if (!url) return null;
+  const proofId = proofs[index]?.id;
+  const url = `/api/credits/proof-file?id=${proofId}`;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
       <div className="relative" onClick={e => e.stopPropagation()}>
-        <img src={url} alt={proofs[index].filename} style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 8, background: '#fff' }} />
+        <img src={url} alt={proofs[index].filename} style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 8, background: '#fff', objectFit: 'contain' }} />
         <button className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl" onClick={onClose}>&times;</button>
         {proofs.length > 1 && (
           <>

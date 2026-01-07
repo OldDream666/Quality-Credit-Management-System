@@ -4,11 +4,12 @@ import { requireAuth, requireCreditSubmit } from "@/lib/auth";
 import { validateObject, validationRules } from "@/lib/validation";
 import { DatabaseConfigManager } from "@/lib/dbConfig";
 import { CreditType } from "@/types";
+import { storage } from "@/lib/storage";
 
 // 文件类型验证
 const ALLOWED_FILE_TYPES = [
   'image/jpeg',
-  'image/jpg', 
+  'image/jpg',
   'image/png',
   'image/gif',
   'application/pdf'
@@ -24,7 +25,7 @@ export const POST = requireCreditSubmit(async (req, user) => {
     if (!contentType.includes('multipart/form-data')) {
       return NextResponse.json({ error: "请使用表单上传" }, { status: 400 });
     }
-    
+
     const formData = await req.formData();
     const type = formData.get('type') as string;
     const files = formData.getAll('proof');
@@ -36,14 +37,14 @@ export const POST = requireCreditSubmit(async (req, user) => {
 
     // 动态获取可用的学分类型
     const creditTypes = await DatabaseConfigManager.getAllCreditTypes();
-    const availableTypes = creditTypes.length > 0 
+    const availableTypes = creditTypes.length > 0
       ? creditTypes.map(ct => ct.key)
       : ['个人活动', '个人比赛', '个人证书', '志愿活动']; // 兜底配置
 
     // 验证学分类型是否合法
     if (!availableTypes.includes(type)) {
-      return NextResponse.json({ 
-        error: "无效的学分类型", 
+      return NextResponse.json({
+        error: "无效的学分类型",
         details: [`学分类型必须是以下值之一: ${availableTypes.join(', ')}`]
       }, { status: 400 });
     }
@@ -81,9 +82,9 @@ export const POST = requireCreditSubmit(async (req, user) => {
     });
 
     if (!validation.isValid) {
-      return NextResponse.json({ 
-        error: "输入验证失败", 
-        details: validation.errors 
+      return NextResponse.json({
+        error: "输入验证失败",
+        details: validation.errors
       }, { status: 400 });
     }
 
@@ -96,18 +97,18 @@ export const POST = requireCreditSubmit(async (req, user) => {
     for (const file of files) {
       if (file && typeof file === 'object' && 'arrayBuffer' in file && 'name' in file && 'type' in file) {
         const fileObj = file as File;
-        
+
         // 检查文件类型
         if (!ALLOWED_FILE_TYPES.includes(fileObj.type)) {
-          return NextResponse.json({ 
-            error: `不支持的文件类型: ${fileObj.name}` 
+          return NextResponse.json({
+            error: `不支持的文件类型: ${fileObj.name}`
           }, { status: 400 });
         }
-        
+
         // 检查文件大小
         if (fileObj.size > MAX_FILE_SIZE) {
-          return NextResponse.json({ 
-            error: `文件过大: ${fileObj.name}` 
+          return NextResponse.json({
+            error: `文件过大: ${fileObj.name}`
           }, { status: 400 });
         }
       }
@@ -129,16 +130,27 @@ export const POST = requireCreditSubmit(async (req, user) => {
       for (const file of files) {
         if (file && typeof file === 'object' && 'arrayBuffer' in file && 'name' in file && 'type' in file) {
           const fileObj = file as File;
-          const buf = Buffer.from(await fileObj.arrayBuffer());
+
+          // 1. 先插入主表记录，file 字段存空 Buffer (占位)
+          const proofRes = await client.query(
+            'INSERT INTO credits_proofs (credit_id, file, filename, mimetype) VALUES ($1, $2, $3, $4) RETURNING id',
+            [credit.id, Buffer.alloc(0), fileObj.name, fileObj.type]
+          );
+          const proofId = proofRes.rows[0].id;
+
+          // 2. 调用存储服务
+          const savedPath = await storage.uploadFile(fileObj, String(proofId));
+
+          // 3. 记录文件路径
           await client.query(
-            'INSERT INTO credits_proofs (credit_id, file, filename, mimetype) VALUES ($1, $2, $3, $4)',
-            [credit.id, buf, fileObj.name, fileObj.type]
+            'INSERT INTO proof_paths (proof_id, file_path) VALUES ($1, $2)',
+            [proofId, savedPath]
           );
         }
       }
 
       await client.query('COMMIT');
-      return NextResponse.json({ 
+      return NextResponse.json({
         credit,
         message: "申请提交成功，等待审批"
       });
@@ -150,8 +162,8 @@ export const POST = requireCreditSubmit(async (req, user) => {
     }
   } catch (error) {
     console.error('学分申请提交错误:', error);
-    return NextResponse.json({ 
-      error: "提交失败，请稍后重试" 
+    return NextResponse.json({
+      error: "提交失败，请稍后重试"
     }, { status: 500 });
   }
 });
@@ -173,8 +185,8 @@ export const GET = requireAuth(async (req, user) => {
     return NextResponse.json({ credits: result.rows });
   } catch (error) {
     console.error('查询学分申请错误:', error);
-    return NextResponse.json({ 
-      error: "查询失败，请稍后重试" 
+    return NextResponse.json({
+      error: "查询失败，请稍后重试"
     }, { status: 500 });
   }
 });

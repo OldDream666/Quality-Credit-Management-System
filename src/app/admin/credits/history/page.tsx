@@ -394,174 +394,36 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 
-function base64ToUint8Array(base64: string) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
 
 function ProofList({ proofs }: { proofs: any[] }) {
-  const [urls, setUrls] = useState<{ [id: number]: string }>({});
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const cacheRef = useRef<{ [id: number]: string }>({});
-  const pendingRef = useRef<{ [id: number]: Promise<string> }>({});
-
-  useEffect(() => {
-    if (!proofs || !proofs.length) return;
-    // token 已由 httpOnly cookie 管理，无需传递
-    const uncachedProofs = proofs.filter(p => !cacheRef.current[p.id] && !urls[p.id] && typeof pendingRef.current[p.id] === 'undefined');
-    if (uncachedProofs.length === 0) {
-      // 使用缓存的数据
-      const cachedUrls = proofs.reduce((acc, p) => {
-        if (cacheRef.current[p.id]) {
-          acc[p.id] = cacheRef.current[p.id];
-        }
-        return acc;
-      }, {} as { [id: number]: string });
-      if (Object.keys(cachedUrls).length > 0) {
-        setUrls(cachedUrls);
-      }
-      return;
-    }
-    // 批量获取文件
-    const proofIds = uncachedProofs.map(p => p.id).join(',');
-    // 创建批量请求的 Promise
-    const batchRequest = fetch(`/api/credits/proof-file?ids=${proofIds}`, {
-      headers: {},
-    })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data && data.files) {
-          const newUrls: { [id: number]: string } = {};
-          data.files.forEach((fileData: any) => {
-            const bytes = base64ToUint8Array(fileData.file);
-            const blob = new Blob([bytes], { type: fileData.mimetype });
-            const objectUrl = URL.createObjectURL(blob);
-            cacheRef.current[fileData.id] = objectUrl;
-            newUrls[fileData.id] = objectUrl;
-            // 清理 pending 状态
-            delete pendingRef.current[fileData.id];
-          });
-          return newUrls;
-        }
-        return {};
-      })
-      .catch(error => {
-        console.warn('批量请求失败，回退到单个请求:', error);
-        // 批量请求失败，回退到单个请求
-        const singleRequests = uncachedProofs.map(p => {
-          const request = fetch(`/api/credits/proof-file?id=${p.id}`, {
-            headers: {},
-          })
-            .then(res => res.ok ? res.blob() : null)
-            .then(blob => {
-              if (blob) {
-                const objectUrl = URL.createObjectURL(blob);
-                cacheRef.current[p.id] = objectUrl;
-                delete pendingRef.current[p.id];
-                return { id: p.id, url: objectUrl };
-              }
-              delete pendingRef.current[p.id];
-              return null;
-            })
-            .catch(() => {
-              delete pendingRef.current[p.id];
-              return null;
-            });
-          pendingRef.current[p.id] = request.then(result => result?.url || '');
-          return request;
-        });
-        return Promise.all(singleRequests).then(results => {
-          const newUrls = results.reduce((acc, result) => {
-            if (result && typeof result === 'object' && 'id' in result && 'url' in result) {
-              acc[result.id] = result.url;
-            }
-            return acc;
-          }, {} as { [id: number]: string });
-          return newUrls;
-        });
-      });
-    // 标记所有未缓存的请求为 pending
-    uncachedProofs.forEach(p => {
-      if (!pendingRef.current[p.id]) {
-        pendingRef.current[p.id] = batchRequest.then(urls => urls[p.id] || '');
-      }
-    });
-    // 处理结果
-    batchRequest.then(newUrls => {
-      if (Object.keys(newUrls).length > 0) {
-        setUrls(prev => ({ ...prev, ...newUrls }));
-      }
-    });
-    return () => {
-      // 清理函数：如果组件卸载，清理 pending 状态
-      uncachedProofs.forEach(p => {
-        delete pendingRef.current[p.id];
-      });
-    };
-  }, [JSON.stringify(proofs)]);
+  const imageProofs = proofs.filter(p => p.mimetype && p.mimetype.startsWith('image/'));
 
   if (!proofs || !proofs.length) return <>-</>;
-  const imageProofs = proofs.filter(p => p.mimetype && p.mimetype.startsWith('image/'));
+
   return (
     <>
       <div className="flex flex-wrap gap-2 mt-2">
         {proofs.map((p, idx) => {
-          const url = urls[p.id] || cacheRef.current[p.id];
           if (p.mimetype && p.mimetype.startsWith('image/')) {
             const imgIdx = imageProofs.findIndex(img => img.id === p.id);
             return (
               <span key={p.id} style={{ display: 'inline-block', cursor: 'pointer' }} onClick={() => setPreviewIndex(imgIdx)}>
-                {url ? (
-                  <img
-                    src={url}
-                    alt={p.filename}
-                    style={{ maxWidth: 40, maxHeight: 40, borderRadius: 4 }}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 4,
-                      background: '#f3f4f6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '10px',
-                      color: '#9ca3af'
-                    }}
-                  >
-                    加载中
-                  </div>
-                )}
+                <ProofImage proofId={p.id} filename={p.filename} style={{ border: previewIndex === imgIdx ? '2px solid #2563eb' : undefined }} />
               </span>
             );
           } else {
-            // pdf和其它类型都显示为下载链接
             return (
-              <a
-                key={p.id}
-                href={url || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline text-xs"
-                style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-              >
-                {p.filename}
-              </a>
+              <span key={p.id}>
+                <ProofFileLink proofId={p.id} filename={p.filename} mimetype={p.mimetype} />
+              </span>
             );
           }
         })}
       </div>
       {previewIndex !== null && imageProofs[previewIndex] && (
         <ImagePreviewModal
-          proofs={imageProofs.map(img => ({ ...img, url: urls[img.id] || cacheRef.current[img.id] }))}
+          proofs={imageProofs}
           index={previewIndex}
           onClose={() => setPreviewIndex(null)}
           onSwitch={i => setPreviewIndex(i)}
@@ -571,13 +433,35 @@ function ProofList({ proofs }: { proofs: any[] }) {
   );
 }
 
-// 审批页同款图片预览弹窗
+function ProofImage({ proofId, filename, style }: { proofId: number, filename: string, style?: React.CSSProperties }) {
+  const url = `/api/credits/proof-file?id=${proofId}`;
+  return <img src={url} alt={filename} style={{ maxWidth: 40, maxHeight: 40, borderRadius: 4, cursor: 'pointer', objectFit: 'cover', ...style }} loading="lazy" />;
+}
+
+function ProofFileLink({ proofId, filename, mimetype }: { proofId: number, filename: string, mimetype?: string }) {
+  const url = `/api/credits/proof-file?id=${proofId}`;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline text-xs"
+      style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}
+      download={filename}
+    >
+      {filename}
+    </a>
+  );
+}
+
 function ImagePreviewModal({ proofs, index, onClose, onSwitch }: { proofs: any[], index: number, onClose: () => void, onSwitch: (i: number) => void }) {
-  if (!proofs[index] || !proofs[index].url) return null;
+  const proofId = proofs[index]?.id;
+  const url = `/api/credits/proof-file?id=${proofId}`;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
       <div className="relative" onClick={e => e.stopPropagation()}>
-        <img src={proofs[index].url} alt={proofs[index].filename} style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 8, background: '#fff' }} />
+        <img src={url} alt={proofs[index].filename} style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 8, background: '#fff', objectFit: 'contain' }} />
         <button className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl" onClick={onClose}>&times;</button>
         {proofs.length > 1 && (
           <>
