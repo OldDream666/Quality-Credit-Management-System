@@ -198,7 +198,7 @@ export default function Sidebar() {
                         className="text-xl font-bold text-white hover:text-blue-400 transition-colors"
                         onClick={() => setIsOpen(false)}
                     >
-                        <span className="text-blue-400">素质</span>学分管理系统
+                        素质学分管理系统
                     </Link>
                 </div>
 

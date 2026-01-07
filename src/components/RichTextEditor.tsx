@@ -18,7 +18,9 @@ import {
   LinkIcon,
   CodeBracketIcon,
   SwatchIcon,
+  Bars3Icon,
 } from '@heroicons/react/24/outline';
+import { Extension } from '@tiptap/core';
 
 // 自定义对齐图标组件
 const TextAlignLeftIcon = () => (
@@ -75,6 +77,46 @@ const FontSize = Mark.create({
   },
 });
 
+// 创建行距扩展
+const LineHeight = Extension.create({
+  name: 'lineHeight',
+
+  addOptions() {
+    return {
+      types: ['paragraph', 'heading'],
+      defaultLineHeight: '1.5',
+    };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          lineHeight: {
+            default: this.options.defaultLineHeight,
+            parseHTML: element => element.style.lineHeight || this.options.defaultLineHeight,
+            renderHTML: attributes => {
+              if (!attributes.lineHeight) return {};
+              return {
+                style: `line-height: ${attributes.lineHeight}`,
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setLineHeight: (lineHeight: string) => ({ commands }: any) => {
+        return this.options.types.every((type: string) => commands.updateAttributes(type, { lineHeight }));
+      },
+    } as any;
+  },
+});
+
 interface RichTextEditorProps {
   content: string;
   onChange: (html: string) => void;
@@ -95,9 +137,8 @@ const MenuButton = ({ onClick, active, disabled, children, title }: MenuButtonPr
     disabled={disabled}
     title={title}
     type="button"
-    className={`p-2 rounded hover:bg-gray-100 transition-colors ${
-      active ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
-    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    className={`p-2 rounded hover:bg-gray-100 transition-colors ${active ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {children}
   </button>
@@ -133,7 +174,9 @@ const RichTextEditor = ({ content, onChange, autoSave = false }: RichTextEditorP
       Underline,
       TextStyle,
       Color,
+      Color,
       FontSize,
+      LineHeight,
     ],
     editorProps: {
       attributes: {
@@ -176,6 +219,10 @@ const RichTextEditor = ({ content, onChange, autoSave = false }: RichTextEditorP
     editor.chain().focus().setMark('fontSize', { size }).run();
   };
 
+  const handleLineHeight = (lineHeight: string) => {
+    (editor.chain().focus() as any).setLineHeight(lineHeight).run();
+  };
+
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="flex flex-wrap gap-1 p-2 border-b bg-gray-50">
@@ -186,7 +233,7 @@ const RichTextEditor = ({ content, onChange, autoSave = false }: RichTextEditorP
         >
           <BoldIcon className="w-5 h-5" />
         </MenuButton>
-        
+
         <MenuButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
           active={editor.isActive('italic')}
@@ -300,7 +347,30 @@ const RichTextEditor = ({ content, onChange, autoSave = false }: RichTextEditorP
           <option value="24px">大号</option>
           <option value="32px">超大</option>
           <option value="48px">特大</option>
+          <option value="32px">超大</option>
+          <option value="48px">特大</option>
         </select>
+
+        <div className="w-px h-6 bg-gray-300 mx-1 self-center" />
+
+        <div className="flex items-center gap-1">
+          <MenuButton onClick={() => { }} disabled active={false} title="行距">
+            <Bars3Icon className="w-5 h-5" />
+          </MenuButton>
+          <select
+            className="h-9 px-2 rounded border bg-white text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors -ml-2"
+            onChange={(e) => handleLineHeight(e.target.value)}
+            value={editor.getAttributes('paragraph').lineHeight || '1.5'}
+          >
+            <option value="1">1.0</option>
+            <option value="1.25">1.25</option>
+            <option value="1.5">1.5</option>
+            <option value="1.75">1.75</option>
+            <option value="2">2.0</option>
+            <option value="2.5">2.5</option>
+            <option value="3">3.0</option>
+          </select>
+        </div>
 
         <div className="w-px h-6 bg-gray-300 mx-1 self-center" />
 
@@ -345,11 +415,11 @@ const RichTextEditor = ({ content, onChange, autoSave = false }: RichTextEditorP
         </MenuButton>
       </div>
 
-      <EditorContent 
-        editor={editor} 
+      <EditorContent
+        editor={editor}
         className="prose prose-lg max-w-none p-6 min-h-[500px] focus:outline-none"
       />
-      
+
       <style jsx global>{`
         .ProseMirror {
           min-height: 500px;
