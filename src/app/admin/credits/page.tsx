@@ -224,11 +224,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
   creditTypesConfig: Record<string, any>,
   systemConfigs: any
 }) {
-  const statusMap: Record<string, string> = {
-    approved: '已通过',
-    rejected: '已拒绝',
-    pending: '待审批',
-  };
+
   const [showReject, setShowReject] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [showApprove, setShowApprove] = useState(false);
@@ -365,8 +361,8 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
           </div>
         )}
 
-        {/* 志愿活动分数计算 */}
-        {credit.type === '志愿活动' && desc.volunteerHours && (() => {
+        {/* 分数计算展示（基于时长） */}
+        {desc.volunteerHours && (() => {
           const typeConfig = creditTypesConfig[credit.type];
           const hours = Number(desc.volunteerHours) || 0;
           if (typeConfig && typeConfig.scoreCalculation === 'time_based' && hours > 0) {
@@ -445,7 +441,7 @@ function ApprovalCard({ credit, onApprove, loading, creditTypesConfig, systemCon
                       💡 建议分数：{typeConfig.defaultScore || 0} 分（固定分数）
                     </div>
                   );
-                } else if (typeConfig.scoreCalculation === 'time_based' && credit.type === '志愿活动') {
+                } else if (typeConfig.scoreCalculation === 'time_based') {
                   let desc: any = {};
                   try { desc = credit.description ? JSON.parse(credit.description) : {}; } catch { }
                   const hours = Number(desc.volunteerHours) || 0;

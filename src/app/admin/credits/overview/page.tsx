@@ -96,13 +96,13 @@ export default function CreditsOverview() {
               {approvals.length === 0 ? (
                 <tr><td colSpan={6} className="text-center text-gray-400 py-6">暂无审批记录</td></tr>
               ) : approvals.slice(0, 5).map((c: any) => {
-                const statusMap: Record<string, string> = {
-                  approved: '已通过',
-                  rejected: '已拒绝',
-                  pending: '待审批',
-                };
+                const statusConfig = systemConfigs.statuses?.find((s: any) => s.key === c.status);
+                const statusLabel = statusConfig?.label || c.status;
+                const statusColor = statusConfig?.color || 'bg-gray-100 text-gray-700';
+
                 const date = c.created_at ? new Date(c.created_at) : null;
                 const dateStr = date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : '';
+
                 return (
                   <tr key={c.id} className="border-t hover:bg-blue-50 transition">
                     <td className="py-2 px-3 align-middle text-center">{c.user_name || c.username || '-'}</td>
@@ -111,22 +111,46 @@ export default function CreditsOverview() {
                       {(() => {
                         let desc: any = {};
                         try { desc = c.description ? JSON.parse(c.description) : {}; } catch { }
-                        if (c.type === '个人活动' && desc.activityName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.activityName}</div>;
-                        if (c.type === '个人比赛' && desc.competitionName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.competitionName}</div>;
-                        if (c.type === '个人证书' && desc.certificateName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.certificateName}</div>;
-                        if (c.type === '志愿活动' && desc.volunteerName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.volunteerName}</div>;
+
+                        const renderDesc = (text: string) => (
+                          <div className="text-gray-500 text-xs whitespace-normal break-words mt-1 leading-tight max-w-full">
+                            {text}
+                          </div>
+                        );
+
+                        // 动态获取描述字段
+                        const typeConfig = systemConfigs.creditTypes?.find((t: any) => t.key === c.type);
+
+                        if (typeConfig && Array.isArray(typeConfig.fields) && typeConfig.fields.length > 0) {
+                          const mainFieldKey = typeConfig.fields.find((f: any) => !['score', 'image', 'file'].includes(f.type))?.key;
+                          if (mainFieldKey && desc[mainFieldKey]) {
+                            return renderDesc(desc[mainFieldKey]);
+                          }
+                        }
+
+                        // 回退逻辑
+                        if (c.type === '个人活动' && desc.activityName) return renderDesc(desc.activityName);
+                        if (c.type === '个人比赛' && desc.competitionName) return renderDesc(desc.competitionName);
+                        if (c.type === '个人证书' && desc.certificateName) return renderDesc(desc.certificateName);
+                        if (c.type === '志愿活动') {
+                          const name = desc.volunteerName || '';
+                          const hours = desc.volunteerHours ? `-${desc.volunteerHours}h` : '';
+                          if (name || hours) return renderDesc(`${name}${hours}`);
+                        }
+
+                        // 泛型回退
+                        if (desc && typeof desc === 'object') {
+                          const firstValue = Object.values(desc).find(v => typeof v === 'string' && v.trim() !== '');
+                          if (firstValue) return renderDesc(String(firstValue));
+                        }
+
                         return null;
                       })()}
                     </td>
                     <td className="py-2 px-3 align-middle text-center">{c.score}</td>
                     <td className="py-2 px-3 align-middle text-center">
-                      <span className={
-                        c.status === 'approved' ? 'bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold' :
-                          c.status === 'rejected' ? 'bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold' :
-                            c.status === 'pending' ? 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold' :
-                              'bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold'
-                      }>
-                        {statusMap[c.status] || c.status}
+                      <span className={`${statusColor} px-2 py-1 rounded text-xs font-bold`}>
+                        {statusLabel}
                       </span>
                     </td>
                     <td className="py-2 px-3 align-middle text-center">{dateStr}</td>

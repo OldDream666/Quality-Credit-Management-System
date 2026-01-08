@@ -10,7 +10,7 @@ import { UserRole, CreditType } from '@/types';
 export interface FieldConfig {
   key: string;
   label: string;
-  type?: 'text' | 'number' | 'date' | 'file';
+  type?: 'text' | 'number' | 'date' | 'file' | 'image';
   required?: boolean;
   description?: string;
 }
@@ -115,7 +115,7 @@ export const FILE_CONFIG = {
   // 允许的文件类型
   ALLOWED_TYPES: process.env.ALLOWED_FILE_TYPES?.split(',') || [
     'image/jpeg',
-    'image/jpg', 
+    'image/jpg',
     'image/png',
     'image/gif',
     'application/pdf'
@@ -173,7 +173,7 @@ export function hasPermission(userPermissions: string[], permission: string): bo
   if (userPermissions.includes('*')) {
     return true;
   }
-  
+
   return userPermissions.includes(permission);
 }
 

@@ -160,17 +160,38 @@ export default function CreditSubmitPage() {
   }
 
   function getFileName() {
+    // 动态生成文件名：优先使用当前类型配置的第一个文本字段的值
+    if (type && creditTypesConfig[type]) {
+      const config = creditTypesConfig[type];
+      const fields = config.fields || [];
+      // 找到第一个适合作为文件名的字段（非文件、非备注、非分数）
+      const nameField = fields.find((f: any) => {
+        const key = typeof f === 'string' ? f : f.key;
+        const type = getFieldType(key);
+        return type !== 'file' && type !== 'image' && key !== 'score' && key !== 'remarks' && key !== 'proofs' && key !== 'proofFiles';
+      });
+
+      if (nameField) {
+        const key = typeof nameField === 'string' ? nameField : nameField.key;
+        const val = fieldValues[key];
+        if (val) {
+          // 如果是志愿活动且有工时，加上工时 (这里稍微保留一点特殊逻辑以优化体验，或者也可以做的更通用)
+          // 为了完全动态，我们检查是否有 volunteerHours 字段
+          if (fieldValues['volunteerHours']) {
+            return `${val}-${fieldValues['volunteerHours']}h`;
+          }
+          return val;
+        }
+      }
+    }
+
+    // 回退逻辑
     switch (type) {
-      case "个人活动":
-        return activityName;
-      case "个人比赛":
-        return competitionName;
-      case "个人证书":
-        return certificateName;
-      case "志愿活动":
-        return volunteerName + (volunteerHours ? `-${volunteerHours}h` : "");
-      default:
-        return "证明材料";
+      case "个人活动": return activityName || "个人活动证明";
+      case "个人比赛": return competitionName || "个人比赛证明";
+      case "个人证书": return certificateName || "个人证书";
+      case "志愿活动": return (volunteerName || "志愿活动") + (volunteerHours ? `-${volunteerHours}h` : "");
+      default: return "证明材料";
     }
   }
 
@@ -339,7 +360,7 @@ export default function CreditSubmitPage() {
           const required = isFieldRequired(fieldKey);
 
           // 证明材料上传字段，按类型或字段名判断
-          if (fieldType === 'file' || fieldKey === 'proofFiles' || fieldKey === 'proofs') {
+          if (fieldType === 'file' || fieldType === 'image' || fieldKey === 'proofFiles' || fieldKey === 'proofs') {
             return (
               <div key={fieldKey}>
                 {/* 自定义文件上传控件 */}
