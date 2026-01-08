@@ -71,31 +71,24 @@ export default function CreditsHistoryPage() {
       if (dateTo) params.append('dateTo', dateTo);
       if (onlyMine) params.append('onlyMine', 'true');
 
-      const response = await fetch(`/api/credits/history/export?${params.toString()}`, {
-        headers: {
-          // token 已由 httpOnly cookie 管理，无需传递
-        }
-      });
+      // 使用直接下载链接而不是 fetch + blob
+      // 这样可以由浏览器直接处理文件流，避免前端内存溢出（特别是文件较大时）
+      // 同时也解决了 fetch 在接收大文件流时可能出现的 "Failed to fetch" 误报
+      const url = `/api/credits/history/export?${params.toString()}`;
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `历史审批数据_${new Date().toISOString().split('T')[0]}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || '导出失败');
-      }
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `历史审批数据_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
     } catch (error) {
-      console.error('导出失败:', error);
+      console.error('导出触发失败:', error);
       alert('导出失败，请重试');
     } finally {
-      setExporting(false);
+      // 延迟关闭 loading 状态，因为无法精确知道下载何时开始
+      setTimeout(() => setExporting(false), 3000);
     }
   };
 

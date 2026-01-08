@@ -281,17 +281,26 @@ export const GET = requireAuth(async (req, user) => {
       });
     });
 
+    // 停止等待所有下载完成，改为直接使用 generateNodeStream 流式传输
+    // 但是目前代码逻辑是先下载后压缩，为了稳妥起见，保留 await Promise.all
+    // 这样至少保证文件都已在内存中（Inputs），主要解决的是输出 Buffer (Output) 过大导致内存溢出或 Response Payload 限制问题
     await Promise.all(downloadPromises);
 
-    // 生成ZIP文件
-    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    // 使用 generateNodeStream 而不是 generateAsync，避免在内存中构建巨大的完整 ZIP Buffer
+    const stream = zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true });
 
-    // 转换 Buffer 为符合 Web 标准的 Blob (解决 TS 类型报错)
-    const zipBlob = new Blob([zipBuffer as any], { type: 'application/zip' });
+    // 将 Node.js Stream 转换为 Web ReadableStream
+    const readable = new ReadableStream({
+      start(controller) {
+        stream.on('data', (chunk) => controller.enqueue(chunk));
+        stream.on('end', () => controller.close());
+        stream.on('error', (err) => controller.error(err));
+      }
+    });
 
-    // 返回ZIP文件
+    // 返回流式响应，避免 Vercel 4.5MB/6MB 的响应体限制
     const exportName = `历史审批数据_${new Date().toISOString().split('T')[0]}.zip`;
-    return new NextResponse(zipBlob, {
+    return new NextResponse(readable, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename=export.zip; filename*=UTF-8''${encodeURIComponent(exportName)}`
