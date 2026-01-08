@@ -339,7 +339,20 @@ export default function Dashboard() {
                   </td>
                   <td className="py-2 px-3 align-middle text-center">{dateStr}</td>
                   <td className="py-2 px-3 align-middle text-center">
-                    <button className="text-blue-600 hover:underline" onClick={() => handleShowDetail(c)}>详细</button>
+                    <button className="text-blue-600 hover:underline mr-2" onClick={() => handleShowDetail(c)}>详细</button>
+                    {c.status === 'pending' && (
+                      <button
+                        className="text-red-500 hover:underline hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm("确定要撤销这条申请吗？撤销后将删除该记录。")) {
+                            handleRevoke(c.id);
+                          }
+                        }}
+                      >
+                        撤销
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -462,6 +475,22 @@ export default function Dashboard() {
       })()}
     </div>
   );
+
+  async function handleRevoke(id: number) {
+    try {
+      const res = await fetch(`/api/credits/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setCredits(prev => prev.filter(c => c.id !== id));
+      } else {
+        const data = await res.json();
+        alert(data.error || "撤销失败");
+      }
+    } catch (err) {
+      alert("撤销失败，请重试");
+    }
+  }
 
   // 详情弹窗拉取单条详情，必须在组件内部
   async function handleShowDetail(item: any) {

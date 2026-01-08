@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/AuthProvider";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 export default function CreditsHistoryPage() {
   const { user, loading } = useAuth();
@@ -27,6 +28,12 @@ export default function CreditsHistoryPage() {
   const [pageSize, setPageSize] = useState(10);
   const [fetched, setFetched] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // 修改分数相关状态
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [editScore, setEditScore] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // 导出功能
   const handleExport = async () => {
@@ -64,6 +71,57 @@ export default function CreditsHistoryPage() {
       alert('导出失败，请重试');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleEditClick = (record: any) => {
+    setEditingRecord(record);
+    setEditScore(String(record.score || 0));
+    setShowEditModal(true);
+  };
+
+  const handleSaveScore = async () => {
+    if (!editingRecord) return;
+
+    // 验证
+    const scoreNum = Number(editScore);
+    if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > 3000) {
+      alert("分数必须在 0 到 3000 之间");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/credits/${editingRecord.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ score: scoreNum })
+      });
+
+      if (res.ok) {
+        // 更新本地数据
+        const updatedRecords = records.map(r =>
+          r.id === editingRecord.id ? { ...r, score: scoreNum } : r
+        );
+        setRecords(updatedRecords);
+        // 如果 filteredRecords 是独立的引用，也需要更新，或者依赖 useEffect 重新计算
+        // 这里的筛选逻辑依赖 records 变化，所以更新 records 应该会触发筛选重算？
+        // 看代码 useEffect [records, ...] 会触发筛选。
+
+        setShowEditModal(false);
+        setEditingRecord(null);
+        setEditScore("");
+      } else {
+        const data = await res.json();
+        alert(data.error || "保存失败");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("保存出错，请检查网络");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -178,6 +236,8 @@ export default function CreditsHistoryPage() {
   const userRoleConfig = systemConfigs.roles?.find((r: any) => r.key === user?.role);
   const userPermissions = Array.isArray(userRoleConfig?.permissions) ? userRoleConfig.permissions : [];
   const canView = user.role === 'admin' || userPermissions.includes('credits.view') || userPermissions.includes('system.admin');
+  const canEditScore = user.role === 'admin' || userPermissions.includes('credits.approve');
+
   if (!canView) return <div className="text-center mt-12 text-red-600">无权限</div>;
 
   // 获取所有类型和状态选项
@@ -185,7 +245,7 @@ export default function CreditsHistoryPage() {
   const allStatuses = Array.from(new Set(records.map(r => r.status))).sort();
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">历史审批记录</h1>
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -301,7 +361,18 @@ export default function CreditsHistoryPage() {
                           return null;
                         })()}
                       </td>
-                      <td className="py-2 px-3 align-middle text-center">{r.score}</td>
+                      <td className="py-2 px-3 align-middle text-center relative group">
+                        <span>{Number(r.score).toFixed(2)}</span>
+                        {canEditScore && r.status === 'approved' && (
+                          <button
+                            onClick={() => handleEditClick(r)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 opacity-0 group-hover:opacity-100 hover:text-blue-700 transition"
+                            title="修改分数"
+                          >
+                            <PencilSquareIcon className="w-4 h-4" />
+                          </button>
+                        )}
+                      </td>
                       <td className="py-2 px-3 align-middle text-center"><ProofList proofs={r.proofs} /></td>
                       <td className="py-2 px-3 align-middle text-center">
                         <span className={
@@ -383,6 +454,53 @@ export default function CreditsHistoryPage() {
           </>
         )}
       </div>
+
+      {/* 修改分数 Modal */}
+      {showEditModal && editingRecord && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+            <h3 className="text-xl font-bold mb-4">修改分数</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                学生：{editingRecord.user_name || editingRecord.username}
+              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                项目：{editingRecord.type}
+              </label>
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">新分数</label>
+              <input
+                type="number"
+                step="0.01"
+                value={editScore}
+                onChange={e => setEditScore(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                max="3000"
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">范围：0 - 3000</p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                disabled={isSaving}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSaveScore}
+                disabled={isSaving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSaving ? "保存中..." : "保存"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
