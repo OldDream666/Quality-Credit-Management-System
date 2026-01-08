@@ -251,15 +251,49 @@ export const GET = requireAuth(async (req, user) => {
 
     Object.values(userStats).forEach((user: any) => {
       const userName = user.user_name || user.user_username;
+
+      // 跟踪当前用户在每个类型文件夹下已使用的文件名，用于去重
+      const userTypeUsedFilenames = new Map<string, Set<string>>();
+
       credits.forEach(credit => {
         if (credit.user_id === user.user_id && credit.status === 'approved') {
           const proofs = proofsMap[credit.id] || [];
+          if (proofs.length === 0) return;
+
           const typeFolder = zip.folder(credit.type);
           if (!typeFolder) return;
           const userFolder = typeFolder.folder(userName);
           if (!userFolder) return;
 
+          // 初始化该类型的文件名集合
+          if (!userTypeUsedFilenames.has(credit.type)) {
+            userTypeUsedFilenames.set(credit.type, new Set());
+          }
+          const usedNames = userTypeUsedFilenames.get(credit.type)!;
+
           proofs.forEach((proof: any) => {
+            // 文件名去重逻辑
+            let originalName = proof.filename || `proof_${proof.id}`;
+            let uniqueName = originalName;
+
+            // 如果文件名已存在，则添加后缀 (1), (2), ...
+            if (usedNames.has(uniqueName)) {
+              let baseName = originalName;
+              let ext = "";
+              const lastDotIndex = originalName.lastIndexOf('.');
+              if (lastDotIndex !== -1) {
+                baseName = originalName.substring(0, lastDotIndex);
+                ext = originalName.substring(lastDotIndex);
+              }
+
+              let counter = 1;
+              while (usedNames.has(uniqueName)) {
+                uniqueName = `${baseName}(${counter})${ext}`;
+                counter++;
+              }
+            }
+            usedNames.add(uniqueName);
+
             downloadPromises.push(async function () {
               let fileContent = proof.file;
               // 如果数据库中二进制为空，则尝试从 storage 获取
@@ -273,7 +307,7 @@ export const GET = requireAuth(async (req, user) => {
               }
 
               if (fileContent && fileContent.length > 0) {
-                userFolder.file(proof.filename, fileContent);
+                userFolder.file(uniqueName, fileContent);
               }
             }());
           });

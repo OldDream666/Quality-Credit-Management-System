@@ -372,10 +372,43 @@ export default function CreditsHistoryPage() {
                         {(() => {
                           let desc: any = {};
                           try { desc = r.description ? JSON.parse(r.description) : {}; } catch { }
-                          if (r.type === '个人活动' && desc.activityName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.activityName}</div>;
-                          if (r.type === '个人比赛' && desc.competitionName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.competitionName}</div>;
-                          if (r.type === '个人证书' && desc.certificateName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.certificateName}</div>;
-                          if (r.type === '志愿活动' && desc.volunteerName) return <div className="text-gray-500 text-xs whitespace-nowrap">{desc.volunteerName}-{desc.volunteerHours}h</div>;
+
+                          const renderDesc = (text: string) => (
+                            <div className="text-gray-500 text-xs whitespace-normal break-words mt-1 leading-tight max-w-full">
+                              {text}
+                            </div>
+                          );
+
+                          // 动态获取描述字段
+                          // 1. 尝试从 systemConfigs 中找到对应类型的配置
+                          const typeConfig = systemConfigs.creditTypes?.find((t: any) => t.key === r.type);
+
+                          // 2. 如果有配置且有 fields 定义，优先显示第一个非分数字段
+                          if (typeConfig && Array.isArray(typeConfig.fields) && typeConfig.fields.length > 0) {
+                            // 找到第一个文本类的字段作为主要描述
+                            const mainFieldKey = typeConfig.fields.find((f: any) => !['score', 'image', 'file'].includes(f.type))?.key;
+
+                            if (mainFieldKey && desc[mainFieldKey]) {
+                              return renderDesc(desc[mainFieldKey]);
+                            }
+                          }
+
+                          // 3. 回退逻辑：兼容旧的硬编码字段（如果配置未加载或配置不全）
+                          if (r.type === '个人活动' && desc.activityName) return renderDesc(desc.activityName);
+                          if (r.type === '个人比赛' && desc.competitionName) return renderDesc(desc.competitionName);
+                          if (r.type === '个人证书' && desc.certificateName) return renderDesc(desc.certificateName);
+                          if (r.type === '志愿活动') {
+                            const name = desc.volunteerName || '';
+                            const hours = desc.volunteerHours ? `-${desc.volunteerHours}h` : '';
+                            if (name || hours) return renderDesc(`${name}${hours}`);
+                          }
+
+                          // 4. 最后尝试显示 description 中第一个有值的字符串属性
+                          if (desc && typeof desc === 'object') {
+                            const firstValue = Object.values(desc).find(v => typeof v === 'string' && v.trim() !== '');
+                            if (firstValue) return renderDesc(String(firstValue));
+                          }
+
                           return null;
                         })()}
                       </td>
