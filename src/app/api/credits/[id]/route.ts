@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { requireAuth } from '@/lib/auth';
 import { DatabaseConfigManager } from "@/lib/dbConfig";
+import { storage } from "@/lib/storage";
 
 // 查询单条学分申请及其证明材料
 export const GET = requireAuth(async (req, user) => {
@@ -80,32 +81,73 @@ export const PUT = requireAuth(async (req, user) => {
 });
 
 // 删除/撤销申请
+// 删除/撤销申请
 export const DELETE = requireAuth(async (req, user) => {
   try {
     const url = new URL(req.url);
     const paths = url.pathname.split('/');
     const creditId = paths[paths.length - 1];
 
-    // 查询记录确认归属和状态
-    const res = await pool.query('SELECT user_id, status FROM credits WHERE id = $1', [creditId]);
+    // 查询记录确认归属、状态及申请人班级
+    const res = await pool.query(`
+      SELECT c.user_id, c.status, u.class as applicant_class 
+      FROM credits c 
+      JOIN users u ON c.user_id = u.id 
+      WHERE c.id = $1
+    `, [creditId]);
+
     if (res.rowCount === 0) {
       return NextResponse.json({ error: "记录不存在" }, { status: 404 });
     }
     const record = res.rows[0];
 
-    // 权限检查
-    const isAdmin = user.role === 'admin';
+    // 获取当前用户权限配置
+    const userRes = await pool.query('SELECT role, class FROM users WHERE id = $1', [user.id]);
+    const currentUser = userRes.rows[0];
+    const roleConfig = await DatabaseConfigManager.getRoleConfig(currentUser.role);
+    const permissions = Array.isArray(roleConfig?.permissions) ? roleConfig.permissions : [];
+
+    const isAdmin = currentUser.role === 'admin';
     const isOwner = record.user_id === user.id;
+    const isApprover = permissions.includes('credits.approve');
+    const isSameClass = currentUser.class && currentUser.class === record.applicant_class;
 
-    if (!isAdmin && !isOwner) {
-      return NextResponse.json({ error: "无权限" }, { status: 403 });
+    // 允许删除的条件：
+    // 1. 管理员
+    // 2. 申请人本人且状态为待审批
+    // 3. 有审批权限的用户且为同班级（允许删除任何状态，用于清理错误记录）
+
+    let canDelete = false;
+
+    if (isAdmin) {
+      canDelete = true;
+    } else if (isOwner) {
+      if (record.status === 'pending') {
+        canDelete = true;
+      } else {
+        return NextResponse.json({ error: "只能撤销待审批的申请" }, { status: 400 });
+      }
+    } else if (isApprover && isSameClass) {
+      canDelete = true;
     }
 
-    // 状态检查：只有 pending 状态可以撤销（除非是管理员强制删除，但需求是撤销未审批）
-    // 如果是学生自己撤销，必须是 pending
-    if (!isAdmin && record.status !== 'pending') {
-      return NextResponse.json({ error: "只能撤销待审批的申请" }, { status: 400 });
+    if (!canDelete) {
+      return NextResponse.json({ error: "无权限删除此记录" }, { status: 403 });
     }
+
+    // 删除关联的存储文件
+    // 先获取所有关联文件的路径/URL
+    const proofsRes = await pool.query(`
+      SELECT pp.file_path 
+      FROM proof_paths pp 
+      JOIN credits_proofs cp ON pp.proof_id = cp.id 
+      WHERE cp.credit_id = $1
+    `, [creditId]);
+
+    // 并行删除文件以提高速度
+    await Promise.all(proofsRes.rows.map(row =>
+      row.file_path ? storage.deleteFile(row.file_path).catch(err => console.error('Delete file error:', err)) : Promise.resolve()
+    ));
 
     // 执行删除
     await pool.query('DELETE FROM credits WHERE id = $1', [creditId]);

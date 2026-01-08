@@ -111,17 +111,15 @@ export default function AdminCreditsPage() {
     }
   }
 
-  const [selectedClass, setSelectedClass] = useState("all");
+  const [studentIdFilter, setStudentIdFilter] = useState("");
 
   // 所有待审批
   const pendings = credits.filter(c => c.status === 'pending');
-  // 提取班级列表
-  const classes = Array.from(new Set(pendings.map(c => c.user_class))).filter(Boolean).sort();
 
   // 筛选后的列表
-  const filteredPendings = selectedClass === 'all'
+  const filteredPendings = !studentIdFilter.trim()
     ? pendings
-    : pendings.filter(c => c.user_class === selectedClass);
+    : pendings.filter(c => c.user_username && c.user_username.startsWith(studentIdFilter.trim()));
 
   const pending = filteredPendings[pendingIndex] || null;
   const currentTotal = filteredPendings.length;
@@ -129,7 +127,7 @@ export default function AdminCreditsPage() {
   // 重置索引当筛选条件变化时
   useEffect(() => {
     setPendingIndex(0);
-  }, [selectedClass]);
+  }, [studentIdFilter]);
 
   if (loading || checkingAuth || !systemConfigs.roles) return <div className="text-center mt-12 text-gray-500">加载中...</div>;
   if (!user) return <div className="text-center mt-12 text-red-600">未登录</div>;
@@ -148,19 +146,14 @@ export default function AdminCreditsPage() {
             <p className="text-gray-500 text-sm mt-1">审核学生提交的学分申请</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {/* 班级筛选 */}
-            <select
-              className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-            >
-              <option value="all">所有班级 ({pendings.length})</option>
-              {classes.map(cls => (
-                <option key={cls} value={cls}>
-                  {cls} ({pendings.filter(p => p.user_class === cls).length})
-                </option>
-              ))}
-            </select>
+            {/* 班级筛选（学号前缀） */}
+            <input
+              type="text"
+              className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 w-40"
+              placeholder="输入学号筛选..."
+              value={studentIdFilter}
+              onChange={(e) => setStudentIdFilter(e.target.value)}
+            />
 
             <div className="bg-blue-50 px-4 py-2 rounded-xl">
               <span className="text-gray-600 text-sm">待审批</span>

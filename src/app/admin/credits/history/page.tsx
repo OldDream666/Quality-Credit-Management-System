@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/AuthProvider";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 export default function CreditsHistoryPage() {
   const { user, loading } = useAuth();
@@ -34,6 +34,31 @@ export default function CreditsHistoryPage() {
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [editScore, setEditScore] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  // 删除功能
+  const handleDelete = async (recordId: number) => {
+    if (!confirm("确定要删除这条记录吗？删除后无法恢复。")) return;
+
+    try {
+      const res = await fetch(`/api/credits/${recordId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setRecords(prev => prev.filter(r => r.id !== recordId));
+        // filteredRecords 会通过 useEffect 自动更新吗？
+        // 不会，因为 filteredRecords 是独立状态，虽然 useEffect 依赖 records，但只有 records 引用变化时才会触发。
+        // setRecords(prev => ...) 可能会触发 useEffect，如果 useEffect 依赖的是 records。
+        // 查看 line 212: useEffect(..., [records, ...])。是的，会触发。
+        // 所以这里不需要手动更新 filteredRecords。
+      } else {
+        const data = await res.json();
+        alert(data.error || "删除失败");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("删除失败");
+    }
+  };
 
   // 导出功能
   const handleExport = async () => {
@@ -338,7 +363,7 @@ export default function CreditsHistoryPage() {
                     <th className="py-2 px-3 w-28">姓名</th>
                     <th className="py-2 px-3 w-32">学号</th>
                     <th className="py-2 px-3 w-36">类型</th>
-                    <th className="py-2 px-3 w-20">分数</th>
+                    <th className="py-2 px-3 w-32">分数</th>
                     <th className="py-2 px-3 w-40">证明材料</th>
                     <th className="py-2 px-3 w-28">状态</th>
                     <th className="py-2 px-3 w-28">审批人</th>
@@ -363,15 +388,28 @@ export default function CreditsHistoryPage() {
                       </td>
                       <td className="py-2 px-3 align-middle text-center relative group">
                         <span>{Number(r.score).toFixed(2)}</span>
-                        {canEditScore && r.status === 'approved' && (
-                          <button
-                            onClick={() => handleEditClick(r)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 opacity-0 group-hover:opacity-100 hover:text-blue-700 transition"
-                            title="修改分数"
-                          >
-                            <PencilSquareIcon className="w-4 h-4" />
-                          </button>
-                        )}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                          {canEditScore && r.status === 'approved' && (
+                            <button
+                              onClick={() => handleEditClick(r)}
+                              className="text-blue-500 hover:text-blue-700 p-1"
+                              title="修改分数"
+                            >
+                              <PencilSquareIcon className="w-4 h-4" />
+                            </button>
+                          )}
+                          {/* 只有管理员或有审批权限的人能看见删除按钮(后端会校验权限，前端这里简单判断canEditScore即可，或者更严格的isAdmin) */}
+                          {/* canEditScore包括admin和credits.approve，符合我们的后端逻辑 */}
+                          {canEditScore && (
+                            <button
+                              onClick={() => handleDelete(r.id)}
+                              className="text-red-500 hover:text-red-700 p-1"
+                              title="删除记录"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="py-2 px-3 align-middle text-center"><ProofList proofs={r.proofs} /></td>
                       <td className="py-2 px-3 align-middle text-center">

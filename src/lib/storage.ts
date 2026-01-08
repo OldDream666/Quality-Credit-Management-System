@@ -6,6 +6,7 @@ import path from 'path';
 interface StorageStrategy {
     upload(content: Buffer, filename: string, contentType: string): Promise<string>; // 返回存储路径或URL
     get(pathOrUrl: string): Promise<Buffer | null>;
+    delete(pathOrUrl: string): Promise<void>;
 }
 
 // 1. 本地文件存储策略 (开发环境/非Serverless环境)
@@ -44,10 +45,22 @@ class LocalStorageStrategy implements StorageStrategy {
         }
         return null;
     }
+
+    async delete(fileKey: string): Promise<void> {
+        if (fileKey.startsWith('http')) return;
+        const fullPath = path.join(this.uploadDir, fileKey);
+        try {
+            if (fs.existsSync(fullPath)) {
+                await fs.promises.unlink(fullPath);
+            }
+        } catch (e) {
+            console.error('Local file delete error:', e);
+        }
+    }
 }
 
 // 2. Vercel Blob 存储策略
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 
 class VercelBlobStrategy implements StorageStrategy {
     async upload(content: Buffer, filename: string, contentType: string): Promise<string> {
@@ -66,6 +79,14 @@ class VercelBlobStrategy implements StorageStrategy {
         } catch (error) {
             console.error('Vercel Blob fetch error:', error);
             return null;
+        }
+    }
+
+    async delete(url: string): Promise<void> {
+        try {
+            await del(url);
+        } catch (error) {
+            console.error('Vercel Blob delete error:', error);
         }
     }
 }
@@ -144,6 +165,23 @@ class StorageManager {
         }
         // 否则作为本地文件处理
         return this.strategy.get(pathOrUrl);
+    }
+
+    async deleteFile(pathOrUrl: string): Promise<void> {
+        // 如果是远程URL，尝试使用 Vercel Blob 删除（如果配置了Token）
+        // 无论当前策略是什么，只要有 Token 就尝试删除远程文件，支持混合模式下的清理
+        if ((pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) && process.env.BLOB_READ_WRITE_TOKEN) {
+            const { del } = require('@vercel/blob');
+            try {
+                await del(pathOrUrl);
+            } catch (e) {
+                console.error('Remote file delete error:', e);
+            }
+            return;
+        }
+
+        // 否则委托给当前策略
+        return this.strategy.delete(pathOrUrl);
     }
 }
 
